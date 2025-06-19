@@ -9,7 +9,27 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Type definitions for our database tables will go here
+// Type definitions for our database tables
 export type Database = {
-  // TODO: Add database types when schema is defined
+  public: {
+    Tables: {
+      // TODO: Add table definitions when schema is created
+      [key: string]: {
+        Row: Record<string, unknown>;
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+      };
+    };
+    Views: {
+      [key: string]: {
+        Row: Record<string, unknown>;
+      };
+    };
+    Functions: {
+      [key: string]: {
+        Args: Record<string, unknown>;
+        Returns: unknown;
+      };
+    };
+  };
 };
