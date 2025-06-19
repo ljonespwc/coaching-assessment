@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
 
+// Force Vercel deployment sync - updated with TypeScript fixes
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
