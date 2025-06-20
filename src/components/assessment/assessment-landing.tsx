@@ -31,6 +31,7 @@ export function AssessmentLanding() {
           
           <div className="mt-10">
             <Button 
+              variant="primary"
               size="lg" 
               className="px-8 py-4 text-lg font-semibold"
               onClick={() => {
