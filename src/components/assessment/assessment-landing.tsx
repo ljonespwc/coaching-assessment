@@ -1,8 +1,15 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function AssessmentLanding() {
+  const router = useRouter();
+
+  const handleStartAssessment = () => {
+    router.push('/assessment');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -34,10 +41,7 @@ export function AssessmentLanding() {
               variant="primary"
               size="lg" 
               className="px-8 py-4 text-lg font-semibold"
-              onClick={() => {
-                // TODO: Navigate to assessment
-                console.log('Starting assessment...');
-              }}
+              onClick={handleStartAssessment}
             >
               START ASSESSMENT
             </Button>
@@ -103,10 +107,7 @@ export function AssessmentLanding() {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => {
-                // TODO: Navigate to assessment
-                console.log('Beginning assessment...');
-              }}
+              onClick={handleStartAssessment}
             >
               BEGIN ASSESSMENT
             </Button>
