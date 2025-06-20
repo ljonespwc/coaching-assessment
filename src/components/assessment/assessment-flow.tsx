@@ -69,9 +69,18 @@ export default function AssessmentFlow() {
   const handleAnswerSelect = useCallback((value: number) => {
     const currentQuestion = questions[currentQuestionIndex];
     if (currentQuestion) {
-      setResponses(prev => new Map(prev.set(currentQuestion.id, value)));
+      const newResponses = new Map(responses.set(currentQuestion.id, value));
+      setResponses(newResponses);
+      
+      // Auto-save after every response
+      const progressData = {
+        currentQuestionIndex,
+        responses: Array.from(newResponses.entries()),
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('assessment_progress', JSON.stringify(progressData));
     }
-  }, [questions, currentQuestionIndex]);
+  }, [questions, currentQuestionIndex, responses]);
 
   const handleSaveProgress = useCallback(async () => {
     if (responses.size === 0) return;
@@ -117,26 +126,36 @@ export default function AssessmentFlow() {
 
   const handleNext = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
+      
+      // Save progress when moving to next question
+      const progressData = {
+        currentQuestionIndex: newIndex,
+        responses: Array.from(responses.entries()),
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('assessment_progress', JSON.stringify(progressData));
     } else {
       // Handle assessment completion
       handleCompleteAssessment();
     }
-  }, [currentQuestionIndex, questions.length, handleCompleteAssessment]);
+  }, [currentQuestionIndex, questions.length, responses, handleCompleteAssessment]);
 
   const handlePrevious = useCallback(() => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      const newIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(newIndex);
+      
+      // Save progress when moving to previous question
+      const progressData = {
+        currentQuestionIndex: newIndex,
+        responses: Array.from(responses.entries()),
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('assessment_progress', JSON.stringify(progressData));
     }
-  }, [currentQuestionIndex]);
-
-  // Auto-save every 5 questions
-  useEffect(() => {
-    const shouldAutoSave = (currentQuestionIndex + 1) % 5 === 0 && responses.size > 0;
-    if (shouldAutoSave) {
-      handleSaveProgress();
-    }
-  }, [currentQuestionIndex, responses.size, handleSaveProgress]);
+  }, [currentQuestionIndex, responses]);
 
   // Load saved progress on mount
   useEffect(() => {
