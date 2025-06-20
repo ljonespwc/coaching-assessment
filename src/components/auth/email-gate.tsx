@@ -83,10 +83,12 @@ export default function EmailGate({ onBack }: EmailGateProps) {
             <div className="space-y-3">
               <Button
                 variant="primary"
-                onClick={() => window.location.reload()}
+                onClick={handleSubmit}
+                loading={loading}
                 className="w-full"
+                disabled={loading}
               >
-                I&apos;ve Clicked the Link
+                {loading ? 'Sending...' : 'Resend Email'}
               </Button>
               
               <Button
@@ -99,7 +101,7 @@ export default function EmailGate({ onBack }: EmailGateProps) {
             </div>
             
             <p className="text-sm text-gray-500 mt-4">
-              Didn&apos;t receive the email? Check your spam folder or try again.
+              Didn&apos;t receive the email? Check your spam folder or click resend above.
             </p>
           </div>
         </motion.div>

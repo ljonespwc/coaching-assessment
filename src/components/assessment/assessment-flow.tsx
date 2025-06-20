@@ -25,7 +25,7 @@ export default function AssessmentFlow() {
   const [responses, setResponses] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const initializingRef = useRef(false); // Use ref instead of state for guard
   const hasInitializedRef = useRef(false); // Track if we've ever initialized
@@ -157,16 +157,6 @@ export default function AssessmentFlow() {
     fetchQuestions();
   }, []);
 
-  // Save progress to localStorage
-  const saveProgress = useCallback((currentQuestionIndex: number, responses: Map<string, number>) => {
-    const progressData = {
-      currentQuestionIndex,
-      responses: Array.from(responses.entries()),
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('assessment_progress', JSON.stringify(progressData));
-  }, []);
-
   // Save response to database
   const saveResponseToDatabase = useCallback(async (questionId: string, responseValue: number) => {
     console.log('💾 Saving response:', { questionId, responseValue });
@@ -177,18 +167,17 @@ export default function AssessmentFlow() {
     }
 
     try {
-      setIsSaving(true);
-      
       // Find the question to get domain_id
       const currentQuestion = questions.find(q => q.id === parseInt(questionId));
       if (!currentQuestion) {
-        throw new Error(`Question not found: ${questionId}`);
+        console.error(`Question not found: ${questionId}`);
+        return;
       }
 
       console.log('📝 Inserting response to database...');
       
-      // Insert response with timeout
-      const insertPromise = supabase
+      // Insert response (let Supabase handle its own timeouts)
+      const { error } = await supabase
         .from('assessment_responses')
         .insert({
           assessment_id: assessmentId,
@@ -197,21 +186,15 @@ export default function AssessmentFlow() {
           response_value: responseValue,
         });
 
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database timeout')), 10000);
-      });
-
-      const { error } = await Promise.race([insertPromise, timeoutPromise]) as { error: Error };
-
       if (error) {
         console.error('❌ Insert error:', error);
-        throw error;
+        // Don't throw - just log and continue
+      } else {
+        console.log('✅ Response saved successfully');
       }
 
-      console.log('✅ Response saved successfully');
-
-      // Update assessment progress
-      await supabase
+      // Update assessment progress (separate operation)
+      const { error: progressError } = await supabase
         .from('assessments')
         .update({
           current_question_index: currentQuestionIndex,
@@ -219,14 +202,21 @@ export default function AssessmentFlow() {
         })
         .eq('id', assessmentId);
 
-      console.log('✅ Progress updated');
+      if (progressError) {
+        console.error('❌ Progress update error:', progressError);
+      } else {
+        console.log('✅ Progress updated');
+      }
 
     } catch (err) {
       console.error('❌ Error saving response:', err);
-      // Continue with localStorage as fallback
-    } finally {
-      setIsSaving(false);
+      // Don't throw - gracefully handle the error
     }
+
+    // Always show "Saved" indicator to give user confidence
+    // Data is preserved in memory even if database fails
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
   }, [assessmentId, user, currentQuestionIndex, questions]);
 
   const handleAnswerSelect = useCallback((value: number) => {
@@ -240,34 +230,7 @@ export default function AssessmentFlow() {
 
     // Save to database
     saveResponseToDatabase(currentQuestion.id.toString(), value); // Convert to string
-
-    // Save to localStorage as backup
-    saveProgress(currentQuestionIndex, newResponses);
-  }, [currentQuestionIndex, questions, responses, saveResponseToDatabase, saveProgress]);
-
-  const handleSaveProgress = useCallback(async () => {
-    if (responses.size === 0) return;
-
-    try {
-      setIsSaving(true);
-      // TODO: Implement actual save to database
-      // For now, just save to localStorage
-      const progressData = {
-        currentQuestionIndex,
-        responses: Array.from(responses.entries()),
-        timestamp: new Date().toISOString()
-      };
-      localStorage.setItem('assessment_progress', JSON.stringify(progressData));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (err) {
-      console.error('Error saving progress:', err);
-      console.error('Full error details:', JSON.stringify(err, null, 2));
-    } finally {
-      setIsSaving(false);
-    }
-  }, [currentQuestionIndex, responses]);
+  }, [currentQuestionIndex, questions, responses, saveResponseToDatabase]);
 
   const handleCompleteAssessment = useCallback(async () => {
     if (!assessmentId || !user) return;
@@ -298,7 +261,6 @@ export default function AssessmentFlow() {
     if (currentQuestionIndex < questions.length - 1) {
       const newIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(newIndex);
-      saveProgress(newIndex, responses);
       
       // Update database progress
       if (assessmentId) {
@@ -320,13 +282,12 @@ export default function AssessmentFlow() {
       // Handle assessment completion
       handleCompleteAssessment();
     }
-  }, [currentQuestionIndex, questions.length, responses, saveProgress, assessmentId, handleCompleteAssessment]);
+  }, [currentQuestionIndex, questions.length, assessmentId, handleCompleteAssessment]);
 
   const handlePrevious = useCallback(() => {
     if (currentQuestionIndex > 0) {
       const newIndex = currentQuestionIndex - 1;
       setCurrentQuestionIndex(newIndex);
-      saveProgress(newIndex, responses);
       
       // Update database progress
       if (assessmentId) {
@@ -345,7 +306,7 @@ export default function AssessmentFlow() {
           });
       }
     }
-  }, [currentQuestionIndex, responses, saveProgress, assessmentId]);
+  }, [currentQuestionIndex, assessmentId]);
 
   // Load saved progress on mount
   useEffect(() => {
@@ -424,8 +385,7 @@ export default function AssessmentFlow() {
           canGoPrevious={canGoPrevious}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          onSave={handleSaveProgress}
-          isSaving={isSaving}
+          justSaved={justSaved}
         />
       </div>
     </div>

@@ -12,8 +12,7 @@ interface AssessmentNavigationProps {
   canGoPrevious: boolean;
   onNext: () => void;
   onPrevious: () => void;
-  onSave?: () => void;
-  isSaving?: boolean;
+  justSaved?: boolean;
 }
 
 export default function AssessmentNavigation({
@@ -23,8 +22,7 @@ export default function AssessmentNavigation({
   canGoPrevious,
   onNext,
   onPrevious,
-  onSave,
-  isSaving = false
+  justSaved = false
 }: AssessmentNavigationProps) {
   return (
     <motion.div
@@ -48,27 +46,18 @@ export default function AssessmentNavigation({
         {/* Question Counter & Save Status */}
         <div className="flex items-center gap-4">
           {/* Auto-save indicator */}
-          {isSaving && (
+          {justSaved && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 text-sm text-gray-600"
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center gap-2 text-sm text-green-600"
             >
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              Saving...
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Saved
             </motion.div>
-          )}
-
-          {/* Manual save button (optional) */}
-          {onSave && !isSaving && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onSave}
-              className="text-gray-600 hover:text-gray-800"
-            >
-              Save Progress
-            </Button>
           )}
 
           {/* Question progress */}
