@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -8,9 +8,9 @@ import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
 
 interface Question {
-  id: string;
+  id: number;
   question_text: string;
-  domain_id: string;
+  domain_id: number;
   question_order: number;
   domains: {
     name: string;
@@ -27,21 +27,31 @@ export default function AssessmentFlow() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
+  const initializingRef = useRef(false); // Use ref instead of state for guard
+  const hasInitializedRef = useRef(false); // Track if we've ever initialized
 
   // Create or load existing assessment
   const initializeAssessment = useCallback(async () => {
-    if (!user) return null;
+    if (!user || initializingRef.current || hasInitializedRef.current) return null; // Add guard condition
+
+    initializingRef.current = true; // Set guard flag to true
 
     try {
       // Check for existing incomplete assessment
-      const { data: existingAssessment } = await supabase
+      const { data: existingAssessment, error: fetchError } = await supabase
         .from('assessments')
         .select('id, current_question_index')
         .eq('user_id', user.id)
         .eq('status', 'in_progress')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching existing assessment:', fetchError);
+        console.error('Full error details:', JSON.stringify(fetchError, null, 2));
+        // Continue to create new assessment
+      }
 
       if (existingAssessment) {
         // Resume existing assessment
@@ -62,14 +72,30 @@ export default function AssessmentFlow() {
 
         return existingAssessment.id;
       } else {
-        // Create new assessment
+        // Create new assessment - double-check no assessment exists
+        const { data: doubleCheck } = await supabase
+          .from('assessments')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('status', 'in_progress')
+          .limit(1)
+          .maybeSingle();
+
+        if (doubleCheck) {
+          // Another process already created one, use it
+          setAssessmentId(doubleCheck.id);
+          return doubleCheck.id;
+        }
+
+        // Safe to create new assessment
         const { data: newAssessment, error } = await supabase
           .from('assessments')
           .insert({
             user_id: user.id,
+            assessment_type: 'full', // Use allowed value from check constraint
             status: 'in_progress',
             current_question_index: 0,
-            started_at: new Date().toISOString(),
+            // Remove manual timestamps - let database handle with defaults
           })
           .select('id')
           .single();
@@ -81,7 +107,11 @@ export default function AssessmentFlow() {
       }
     } catch (err) {
       console.error('Error initializing assessment:', err);
+      console.error('Full error details:', JSON.stringify(err, null, 2));
       return null;
+    } finally {
+      initializingRef.current = false; // Reset guard flag
+      hasInitializedRef.current = true; // Set initialized flag to true
     }
   }, [user]);
 
@@ -117,6 +147,7 @@ export default function AssessmentFlow() {
         setQuestions(transformedQuestions);
       } catch (err) {
         console.error('Error fetching questions:', err);
+        console.error('Full error details:', JSON.stringify(err, null, 2));
         setError('Failed to load assessment questions');
       } finally {
         setLoading(false);
@@ -138,24 +169,46 @@ export default function AssessmentFlow() {
 
   // Save response to database
   const saveResponseToDatabase = useCallback(async (questionId: string, responseValue: number) => {
-    if (!assessmentId || !user) return;
+    console.log('💾 Saving response:', { questionId, responseValue });
+    
+    if (!assessmentId || !user) {
+      console.log('❌ Cannot save - missing assessmentId or user');
+      return;
+    }
 
     try {
       setIsSaving(true);
       
-      // Upsert response (insert or update if exists)
-      const { error } = await supabase
+      // Find the question to get domain_id
+      const currentQuestion = questions.find(q => q.id === parseInt(questionId));
+      if (!currentQuestion) {
+        throw new Error(`Question not found: ${questionId}`);
+      }
+
+      console.log('📝 Inserting response to database...');
+      
+      // Insert response with timeout
+      const insertPromise = supabase
         .from('assessment_responses')
-        .upsert({
+        .insert({
           assessment_id: assessmentId,
-          question_id: questionId,
+          question_id: parseInt(questionId),
+          domain_id: currentQuestion.domain_id,
           response_value: responseValue,
-          answered_at: new Date().toISOString(),
-        }, {
-          onConflict: 'assessment_id,question_id'
         });
 
-      if (error) throw error;
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database timeout')), 10000);
+      });
+
+      const { error } = await Promise.race([insertPromise, timeoutPromise]) as { error: Error };
+
+      if (error) {
+        console.error('❌ Insert error:', error);
+        throw error;
+      }
+
+      console.log('✅ Response saved successfully');
 
       // Update assessment progress
       await supabase
@@ -166,13 +219,15 @@ export default function AssessmentFlow() {
         })
         .eq('id', assessmentId);
 
+      console.log('✅ Progress updated');
+
     } catch (err) {
-      console.error('Error saving response to database:', err);
+      console.error('❌ Error saving response:', err);
       // Continue with localStorage as fallback
     } finally {
       setIsSaving(false);
     }
-  }, [assessmentId, user, currentQuestionIndex]);
+  }, [assessmentId, user, currentQuestionIndex, questions]);
 
   const handleAnswerSelect = useCallback((value: number) => {
     const currentQuestion = questions[currentQuestionIndex];
@@ -180,11 +235,11 @@ export default function AssessmentFlow() {
 
     // Update responses state
     const newResponses = new Map(responses);
-    newResponses.set(currentQuestion.id, value);
+    newResponses.set(currentQuestion.id.toString(), value); // Convert to string
     setResponses(newResponses);
 
     // Save to database
-    saveResponseToDatabase(currentQuestion.id, value);
+    saveResponseToDatabase(currentQuestion.id.toString(), value); // Convert to string
 
     // Save to localStorage as backup
     saveProgress(currentQuestionIndex, newResponses);
@@ -208,6 +263,7 @@ export default function AssessmentFlow() {
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err) {
       console.error('Error saving progress:', err);
+      console.error('Full error details:', JSON.stringify(err, null, 2));
     } finally {
       setIsSaving(false);
     }
@@ -234,6 +290,7 @@ export default function AssessmentFlow() {
       console.log('Assessment completed!');
     } catch (err) {
       console.error('Error completing assessment:', err);
+      console.error('Full error details:', JSON.stringify(err, null, 2));
     }
   }, [assessmentId, user]);
 
@@ -253,7 +310,10 @@ export default function AssessmentFlow() {
           })
           .eq('id', assessmentId)
           .then(({ error }) => {
-            if (error) console.error('Error updating progress:', error);
+            if (error) {
+              console.error('Error updating progress:', error);
+              console.error('Full error details:', JSON.stringify(error, null, 2));
+            }
           });
       }
     } else {
@@ -278,7 +338,10 @@ export default function AssessmentFlow() {
           })
           .eq('id', assessmentId)
           .then(({ error }) => {
-            if (error) console.error('Error updating progress:', error);
+            if (error) {
+              console.error('Error updating progress:', error);
+              console.error('Full error details:', JSON.stringify(error, null, 2));
+            }
           });
       }
     }
@@ -294,13 +357,17 @@ export default function AssessmentFlow() {
         setResponses(new Map(savedResponses));
       } catch (err) {
         console.error('Error loading saved progress:', err);
+        console.error('Full error details:', JSON.stringify(err, null, 2));
       }
     }
   }, []);
 
   useEffect(() => {
-    initializeAssessment();
-  }, [initializeAssessment]);
+    if (user && !assessmentId && !initializingRef.current && !hasInitializedRef.current) {
+      initializeAssessment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, assessmentId]); // Intentionally excluding initializeAssessment to prevent re-runs
 
   if (loading) {
     return (
@@ -325,7 +392,7 @@ export default function AssessmentFlow() {
   }
 
   const currentQuestion = questions[currentQuestionIndex];
-  const currentResponse = responses.get(currentQuestion.id);
+  const currentResponse = responses.get(currentQuestion.id.toString()); // Convert to string
   const canGoNext = currentResponse !== undefined;
   const canGoPrevious = currentQuestionIndex > 0;
 

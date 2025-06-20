@@ -4,9 +4,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface Question {
-  id: string;
+  id: number;
   question_text: string;
-  domain_id: string;
+  domain_id: number;
   question_order: number;
   domains: {
     name: string;

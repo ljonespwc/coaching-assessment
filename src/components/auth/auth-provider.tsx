@@ -43,14 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        // Add timeout to prevent infinite loading
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Session check timeout')), 5000)
-        );
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-        const { data: { session }, error } = result;
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
@@ -80,7 +73,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -100,30 +92,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const createUserProfile = async (user: User) => {
     try {
-      // Check if profile already exists
-      const { data: existingProfile } = await supabase
+      // Use upsert to handle potential duplicates gracefully
+      const { error } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single();
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || null,
+          // Remove manual timestamps - let database handle with defaults
+        }, {
+          onConflict: 'id'
+        });
 
-      if (!existingProfile) {
-        // Create new profile
-        const { error } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-
-        if (error) {
-          console.error('Error creating user profile:', error);
-        } else {
-          console.log('User profile created successfully');
-        }
+      if (error) {
+        console.error('Error creating/updating user profile:', error);
+      } else {
+        console.log('User profile created/updated successfully');
       }
     } catch (error) {
       console.error('Error in createUserProfile:', error);

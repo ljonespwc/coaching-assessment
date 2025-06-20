@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import AssessmentFlow from '@/components/assessment/assessment-flow';
@@ -8,6 +8,13 @@ import AssessmentFlow from '@/components/assessment/assessment-flow';
 export default function AssessmentPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  // Handle redirect in useEffect to avoid setState during render
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+    }
+  }, [loading, user, router]);
 
   // Show loading while checking authentication
   if (loading) {
@@ -22,10 +29,8 @@ export default function AssessmentPage() {
     );
   }
 
-  // Redirect to home if not authenticated
+  // Show loading while redirecting
   if (!user) {
-    console.log('No user found, redirecting to home');
-    router.push('/');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
