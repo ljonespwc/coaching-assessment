@@ -1,14 +1,47 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth/auth-provider';
+import EmailGate from '@/components/auth/email-gate';
 
 export function AssessmentLanding() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const [showEmailGate, setShowEmailGate] = useState(false);
 
   const handleStartAssessment = () => {
-    router.push('/assessment');
+    if (user) {
+      // User is already authenticated, go directly to assessment
+      router.push('/assessment');
+    } else {
+      // Show email collection
+      setShowEmailGate(true);
+    }
   };
+
+  const handleEmailGateBack = () => {
+    setShowEmailGate(false);
+  };
+
+  // Show email gate if requested
+  if (showEmailGate) {
+    return (
+      <EmailGate 
+        onBack={handleEmailGateBack}
+      />
+    );
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
