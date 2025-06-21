@@ -30,6 +30,7 @@ export default function AssessmentFlow() {
   
   // Guard flags to prevent multiple concurrent initializations
   const hasInitializedRef = useRef(false);
+  const hasLoadedQuestionsRef = useRef(false);
 
   // Load assessment state from database
   const loadAssessmentState = useCallback(async (assessmentIdToLoad: string) => {
@@ -311,7 +312,7 @@ export default function AssessmentFlow() {
   // Fetch all questions on component mount
   useEffect(() => {
     // Prevent multiple executions
-    if (questionsLoaded) {
+    if (hasLoadedQuestionsRef.current) {
       console.log('📚 Questions already loaded, skipping fetch');
       return;
     }
@@ -342,6 +343,7 @@ export default function AssessmentFlow() {
         setQuestions(transformedQuestions);
         setLoading(false);
         setQuestionsLoaded(true);
+        hasLoadedQuestionsRef.current = true;
         console.log('🎯 Set questionsLoaded = true');
         
         // Load domain information separately
@@ -363,6 +365,8 @@ export default function AssessmentFlow() {
         setLoading(false);
         // Even on error, mark as "loaded" to prevent infinite retries
         setQuestionsLoaded(true);
+      } finally {
+        hasLoadedQuestionsRef.current = true;
       }
     }
 
@@ -374,7 +378,25 @@ export default function AssessmentFlow() {
   useEffect(() => {
     if (questionsLoaded && !hasInitializedRef.current) {
       console.log('🚀 Questions loaded, initializing assessment...');
-      initializeAssessment();
+      
+      // Start initialization
+      initializeAssessment().finally(() => {
+        // Always clear loading after initialization attempt
+        console.log('🎯 Assessment initialization complete, clearing loading state');
+        setLoading(false);
+      });
+      
+      // Safety timeout: reset guard flag if initialization hangs
+      const timeoutId = setTimeout(() => {
+        if (hasInitializedRef.current) {
+          console.log('⚠️ Initialization timeout - resetting guard flag');
+          hasInitializedRef.current = false;
+          setLoading(false); // Also clear loading on timeout
+        }
+      }, 15000); // 15 second timeout
+      
+      // Clear timeout if component unmounts
+      return () => clearTimeout(timeoutId);
     }
   }, [questionsLoaded, initializeAssessment]);
 
