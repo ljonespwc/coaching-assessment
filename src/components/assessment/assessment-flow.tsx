@@ -159,38 +159,64 @@ export default function AssessmentFlow() {
 
   // Save response to database
   const saveResponseToDatabase = useCallback(async (questionId: string, responseValue: number) => {
-    console.log('💾 Saving response:', { questionId, responseValue });
-    
+    console.log('💾 Saving response:', { questionId, responseValue, assessmentId, userId: user?.id });
     if (!assessmentId || !user) {
-      console.log('❌ Cannot save - missing assessmentId or user');
+      console.log('❌ Cannot save - missing assessmentId or user:', { assessmentId, user: !!user });
       return;
     }
 
+    // Debug: Check current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log('🔐 Current session:', { 
+      hasSession: !!session, 
+      userId: session?.user?.id, 
+      userEmail: session?.user?.email,
+      sessionError 
+    });
+
     try {
-      // Find the question to get domain_id
       const currentQuestion = questions.find(q => q.id === parseInt(questionId));
       if (!currentQuestion) {
-        console.error(`Question not found: ${questionId}`);
+        console.error(`Question not found: ${questionId}`, { availableQuestions: questions.map(q => q.id) });
         return;
       }
 
-      console.log('📝 Inserting response to database...');
-      
-      // Insert response (let Supabase handle its own timeouts)
-      const { error } = await supabase
+      console.log('📝 Inserting response to database...', {
+        assessment_id: assessmentId,
+        question_id: parseInt(questionId),
+        domain_id: currentQuestion.domain_id,
+        response_value: responseValue,
+      });
+
+      console.log('🔄 About to execute supabase insert...');
+      const { data, error } = await supabase
         .from('assessment_responses')
         .insert({
           assessment_id: assessmentId,
           question_id: parseInt(questionId),
           domain_id: currentQuestion.domain_id,
           response_value: responseValue,
-        });
+        })
+        .select();
+
+      console.log('📤 Insert operation completed:', { data, error, hasData: !!data, hasError: !!error });
 
       if (error) {
         console.error('❌ Insert error:', error);
+        console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+        
+        // Check for foreign key constraint violation (assessment doesn't exist)
+        if (error.message?.includes('assessment_responses_assessment_id_fkey')) {
+          console.error('🚨 CRITICAL: Assessment ID not found in database!', {
+            frontendAssessmentId: assessmentId,
+            error: 'Foreign key constraint violation - assessment does not exist'
+          });
+          // TODO: Reinitialize assessment or redirect to start
+        }
+        
         // Don't throw - just log and continue
       } else {
-        console.log('✅ Response saved successfully');
+        console.log('✅ Response saved successfully:', data);
       }
 
       // Update assessment progress (separate operation)
@@ -204,19 +230,25 @@ export default function AssessmentFlow() {
 
       if (progressError) {
         console.error('❌ Progress update error:', progressError);
+        console.error('❌ Full progress error details:', JSON.stringify(progressError, null, 2));
       } else {
         console.log('✅ Progress updated');
       }
 
     } catch (err) {
       console.error('❌ Error saving response:', err);
+      console.error('❌ Full catch error details:', JSON.stringify(err, null, 2));
       // Don't throw - gracefully handle the error
     }
 
     // Always show "Saved" indicator to give user confidence
     // Data is preserved in memory even if database fails
+    console.log('🎯 Setting justSaved to true');
     setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2000);
+    setTimeout(() => {
+      console.log('🎯 Setting justSaved to false');
+      setJustSaved(false);
+    }, 2000);
   }, [assessmentId, user, currentQuestionIndex, questions]);
 
   const handleAnswerSelect = useCallback((value: number) => {
@@ -246,9 +278,6 @@ export default function AssessmentFlow() {
         })
         .eq('id', assessmentId);
 
-      // Clear localStorage since assessment is complete
-      localStorage.removeItem('assessment_progress');
-      
       // TODO: Navigate to results page
       console.log('Assessment completed!');
     } catch (err) {
@@ -308,20 +337,69 @@ export default function AssessmentFlow() {
     }
   }, [currentQuestionIndex, assessmentId]);
 
-  // Load saved progress on mount
+  // Auto-save progress to database every 5 questions
   useEffect(() => {
-    const savedProgress = localStorage.getItem('assessment_progress');
-    if (savedProgress) {
+    if (currentQuestionIndex > 0 && currentQuestionIndex % 5 === 0) {
+      console.log(`Auto-saving progress at question ${currentQuestionIndex}`);
+      // Progress is already saved in database via saveResponseToDatabase
+    }
+  }, [currentQuestionIndex, assessmentId]);
+
+  // Load assessment state from database on mount
+  useEffect(() => {
+    async function loadAssessmentState() {
+      if (!assessmentId) return;
+      
       try {
-        const { currentQuestionIndex: savedIndex, responses: savedResponses } = JSON.parse(savedProgress);
-        setCurrentQuestionIndex(savedIndex);
-        setResponses(new Map(savedResponses));
+        console.log('📥 Loading assessment state from database...');
+        
+        // Load existing responses
+        const { data: existingResponses, error: responsesError } = await supabase
+          .from('assessment_responses')
+          .select('question_id, response_value')
+          .eq('assessment_id', assessmentId);
+
+        if (responsesError) {
+          console.error('Error loading responses:', responsesError);
+          return;
+        }
+
+        // Load current progress
+        const { data: assessment, error: assessmentError } = await supabase
+          .from('assessments')
+          .select('current_question_index')
+          .eq('id', assessmentId)
+          .single();
+
+        if (assessmentError) {
+          console.error('Error loading assessment progress:', assessmentError);
+          return;
+        }
+
+        // Set state from database
+        if (existingResponses && existingResponses.length > 0) {
+          const responseMap = new Map();
+          existingResponses.forEach(response => {
+            responseMap.set(response.question_id.toString(), response.response_value);
+          });
+          setResponses(responseMap);
+          console.log(`📥 Loaded ${existingResponses.length} existing responses from database`);
+        }
+
+        if (assessment && assessment.current_question_index > 0) {
+          setCurrentQuestionIndex(assessment.current_question_index);
+          console.log(`📥 Loaded current question index: ${assessment.current_question_index}`);
+        }
+
       } catch (err) {
-        console.error('Error loading saved progress:', err);
-        console.error('Full error details:', JSON.stringify(err, null, 2));
+        console.error('Error loading assessment state:', err);
       }
     }
-  }, []);
+
+    if (assessmentId) {
+      loadAssessmentState();
+    }
+  }, [assessmentId]);
 
   useEffect(() => {
     if (user && !assessmentId && !initializingRef.current && !hasInitializedRef.current) {
