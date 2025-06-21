@@ -23,8 +23,7 @@ export default function AssessmentFlow() {
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<Map<string, number>>(new Map());
-  const [error, setError] = useState<string | null>(null);
+  const [responses, setResponses] = useState<Record<string, number>>({});
   const [justSaved, setJustSaved] = useState(false);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const initializingRef = useRef(false);
@@ -172,6 +171,21 @@ export default function AssessmentFlow() {
         setLoading(false);
         questionsLoadedRef.current = true;
         console.log('🎯 Set questionsLoadedRef.current = true');
+        
+        // Load domain information separately
+        const { data: domainsData, error: domainsError } = await supabase
+          .from('domains')
+          .select('id, name, description');
+        
+        if (!domainsError && domainsData) {
+          // Update questions with domain info
+          const questionsWithDomains = transformedQuestions.map(q => ({
+            ...q,
+            domains: domainsData.find(d => d.id === q.domain_id) || { name: 'Unknown', description: '' }
+          }));
+          setQuestions(questionsWithDomains);
+          console.log('✅ Updated questions with domain information');
+        }
       } catch (err) {
         console.error('❌ Error loading questions:', err);
         setLoading(false);
@@ -291,8 +305,8 @@ export default function AssessmentFlow() {
     if (!currentQuestion) return;
 
     // Update responses state
-    const newResponses = new Map(responses);
-    newResponses.set(currentQuestion.id.toString(), value); // Convert to string
+    const newResponses = { ...responses };
+    newResponses[currentQuestion.id] = value;
     setResponses(newResponses);
 
     // Save to database
@@ -444,10 +458,7 @@ export default function AssessmentFlow() {
 
         // Set state from database
         if (existingResponses && existingResponses.length > 0) {
-          const responseMap = new Map();
-          existingResponses.forEach(response => {
-            responseMap.set(response.question_id.toString(), response.response_value);
-          });
+          const responseMap = existingResponses.reduce((acc, response) => ({ ...acc, [response.question_id]: response.response_value }), {});
           setResponses(responseMap);
           console.log(`📥 Loaded ${existingResponses.length} existing responses from database`);
         }
@@ -487,19 +498,8 @@ export default function AssessmentFlow() {
     );
   }
 
-  if (error || questions.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-red-600">
-          <p className="text-lg font-medium">Error loading assessment</p>
-          <p className="text-sm mt-2">{error || 'No questions found'}</p>
-        </div>
-      </div>
-    );
-  }
-
   const currentQuestion = questions[currentQuestionIndex];
-  const currentResponse = responses.get(currentQuestion.id.toString()); // Convert to string
+  const currentResponse = responses[currentQuestion.id];
   const canGoNext = currentResponse !== undefined;
   const canGoPrevious = currentQuestionIndex > 0;
 
