@@ -31,8 +31,9 @@ interface AssessmentState {
 }
 
 export default function AssessmentFlowV2() {
-  const { user } = useAuth();
+  const { user } = useAuth(); // Remove fingerprint dependency
   
+  // Test auto-deploy after making repo public and reconnecting
   // Simple state - no complex flags
   const [questions, setQuestions] = useState<Question[]>([]);
   const [assessment, setAssessment] = useState<AssessmentState>({
