@@ -110,7 +110,7 @@ export default function QuestionCard({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Header with progress */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="space-y-2">
           {/* Overall progress */}
           <div className="text-sm text-gray-600">
@@ -129,7 +129,7 @@ export default function QuestionCard({
       </div>
 
       {/* Domain Progress Boxes */}
-      <div className="mb-8 space-y-3">
+      <div className="mb-6 space-y-2">
         {sortedDomains.map((domain) => {
           const status = getDomainStatus(domain.id);
           const progress = getDomainProgress(domain.id);
@@ -139,7 +139,7 @@ export default function QuestionCard({
           return (
             <motion.div
               key={domain.id}
-              className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
+              className={`relative p-3 rounded-lg border-2 transition-all duration-200 ${
                 isActive 
                   ? 'border-current shadow-md' 
                   : 'border-gray-200'
@@ -153,7 +153,7 @@ export default function QuestionCard({
               transition={{ duration: 0.3, delay: domain.display_order * 0.05 }}
             >
               {/* Domain header */}
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-2">
                 <div 
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
                   style={{ backgroundColor: statusColor }}
@@ -196,7 +196,7 @@ export default function QuestionCard({
       </div>
 
       {/* Question */}
-      <div className="mb-8 min-h-[120px] flex items-center">
+      <div className="mb-6 min-h-[120px] flex items-center">
         <AnimatePresence mode="wait">
           <motion.h2
             key={questionIndex}
@@ -215,7 +215,7 @@ export default function QuestionCard({
       </div>
 
       {/* Likert Scale */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-700 mb-6 text-center">
           How much do you agree with this statement?
         </h3>
