@@ -129,7 +129,7 @@ export default function QuestionCard({
       </div>
 
       {/* Domain Progress Boxes */}
-      <div className="mb-6 space-y-2">
+      <div className="mb-6 grid grid-cols-2 gap-3">
         {sortedDomains.map((domain) => {
           const status = getDomainStatus(domain.id);
           const progress = getDomainProgress(domain.id);
