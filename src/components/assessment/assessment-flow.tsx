@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
+import CompletionCelebration from './completion-celebration';
 
 interface Question {
   id: number;
@@ -327,6 +328,24 @@ export default function AssessmentFlowV2() {
     return uniqueDomains.sort((a, b) => a.display_order - b.display_order);
   }, [questions]);
 
+  // Check if all domains are complete
+  const allDomainsComplete = useMemo(() => {
+    return domains.every(domain => {
+      const domainQuestions = questions.filter(q => q.domain_id === domain.id);
+      const answeredCount = domainQuestions.filter(q => assessment.responses[q.id] !== undefined).length;
+      return answeredCount === domainQuestions.length && domainQuestions.length > 0;
+    });
+  }, [domains, questions, assessment.responses]);
+
+  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
+
+  // Trigger celebration when all domains complete
+  useEffect(() => {
+    if (allDomainsComplete && questions.length > 0 && !showCompletionCelebration) {
+      setShowCompletionCelebration(true);
+    }
+  }, [allDomainsComplete, questions.length, showCompletionCelebration]);
+
   // Loading state
   if (loading || !assessment.isReady || questions.length === 0) {
     return (
@@ -377,6 +396,11 @@ export default function AssessmentFlowV2() {
           domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
         />
       </div>
+
+      <CompletionCelebration
+        isComplete={showCompletionCelebration}
+        onComplete={() => setShowCompletionCelebration(false)}
+      />
     </div>
   );
 }

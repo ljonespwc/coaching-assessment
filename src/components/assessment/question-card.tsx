@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Question {
@@ -57,6 +57,8 @@ export default function QuestionCard({
   responses
 }: QuestionCardProps) {
   const domainColor = question.domains?.color_hex || '#6B7280';
+  const [clickedButton, setClickedButton] = useState<number | null>(null);
+  const [celebratingDomains, setCelebratingDomains] = useState<Set<number>>(new Set());
 
   const getDomainStatus = (domainId: number): 'not-started' | 'in-progress' | 'complete' => {
     const domainQuestions = allQuestions.filter(q => q.domain_id === domainId);
@@ -70,6 +72,21 @@ export default function QuestionCard({
   const getDomainProgress = (domainId: number) => {
     const domainQuestions = allQuestions.filter(q => q.domain_id === domainId);
     const answeredCount = domainQuestions.filter(q => responses[q.id] !== undefined).length;
+    const wasComplete = celebratingDomains.has(domainId);
+    const isNowComplete = answeredCount === domainQuestions.length && domainQuestions.length > 0;
+    
+    // Trigger celebration if domain just completed
+    if (isNowComplete && !wasComplete && answeredCount > 0) {
+      setCelebratingDomains(prev => new Set([...prev, domainId]));
+      setTimeout(() => {
+        setCelebratingDomains(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(domainId);
+          return newSet;
+        });
+      }, 2000);
+    }
+    
     return {
       current: answeredCount,
       total: domainQuestions.length,
@@ -127,7 +144,20 @@ export default function QuestionCard({
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
                   style={{ backgroundColor: statusColor }}
                 >
-                  {status === 'complete' ? '✓' : ''}
+                  {status === 'complete' ? (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ 
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                        delay: 0.1
+                      }}
+                    >
+                      ✓
+                    </motion.span>
+                  ) : ''}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 text-sm">
@@ -162,6 +192,27 @@ export default function QuestionCard({
                   <div 
                     className="w-2 h-8 rounded-r"
                     style={{ backgroundColor: domain.color_hex }}
+                  />
+                </div>
+              )}
+
+              {/* Celebration */}
+              {celebratingDomains.has(domain.id) && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    className="text-4xl font-bold text-white"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    🎉
+                  </motion.div>
+                  <motion.div
+                    className="absolute inset-0"
+                    style={{ backgroundColor: domain.color_hex }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    transition={{ duration: 0.3 }}
                   />
                 </div>
               )}
@@ -215,10 +266,14 @@ export default function QuestionCard({
         
         <div className="flex justify-between gap-4">
           {LIKERT_OPTIONS.map((option) => (
-            <button
+            <motion.button
               key={option.value}
-              onClick={() => onAnswerSelect(option.value)}
-              className={`flex-1 p-4 rounded-lg border-2 transition-all duration-200 ${
+              onClick={() => {
+                setClickedButton(option.value);
+                setTimeout(() => setClickedButton(null), 600);
+                onAnswerSelect(option.value);
+              }}
+              className={`relative overflow-hidden flex-1 p-4 rounded-lg border-2 transition-all duration-200 ${
                 currentAnswer === option.value
                   ? 'border-current text-white'
                   : 'border-gray-300 text-gray-700 hover:border-gray-400'
@@ -227,12 +282,28 @@ export default function QuestionCard({
                 backgroundColor: currentAnswer === option.value ? domainColor : 'transparent',
                 borderColor: currentAnswer === option.value ? domainColor : undefined
               }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="text-center">
+              <div className="text-center relative z-10">
                 <div className="text-2xl font-bold mb-2">{option.value}</div>
                 <div className="text-sm">{option.label}</div>
               </div>
-            </button>
+              
+              {/* Ripple effect */}
+              <AnimatePresence>
+                {clickedButton === option.value && (
+                  <motion.div
+                    className="absolute inset-0 rounded-lg"
+                    style={{ backgroundColor: `${domainColor}40` }}
+                    initial={{ scale: 0, opacity: 0.8 }}
+                    animate={{ scale: 2, opacity: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.button>
           ))}
         </div>
       </div>
