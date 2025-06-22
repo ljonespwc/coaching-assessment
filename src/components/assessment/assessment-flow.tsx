@@ -342,13 +342,13 @@ export default function AssessmentFlowV2() {
   const currentQuestion = questions[assessment.currentIndex];
   const currentResponse = assessment.responses[currentQuestion.id];
   
-  // Find the furthest question that has been answered
-  const furthestAnsweredIndex = questions.reduce((maxIndex, question, index) => {
-    return assessment.responses[question.id] !== undefined ? index : maxIndex;
-  }, -1);
+  // Check if there's a next question that's already been answered
+  const nextQuestionIndex = assessment.currentIndex + 1;
+  const nextQuestionAnswered = nextQuestionIndex < questions.length && 
+    assessment.responses[questions[nextQuestionIndex].id] !== undefined;
   
-  // Can go next if: 1) current question is answered, OR 2) we're reviewing (not at furthest point)
-  const canGoNext = currentResponse !== undefined || assessment.currentIndex <= furthestAnsweredIndex;
+  // Can go next if: 1) current question is answered, OR 2) next question is already answered (reviewing)
+  const canGoNext = currentResponse !== undefined || nextQuestionAnswered;
   const canGoPrevious = assessment.currentIndex > 0;
 
   return (

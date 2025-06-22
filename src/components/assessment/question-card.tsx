@@ -111,7 +111,11 @@ export default function QuestionCard({
               }`}
               style={{
                 borderColor: isActive ? domain.color_hex : undefined,
-                backgroundColor: isActive ? `${domain.color_hex}10` : undefined
+                backgroundColor: status === 'complete' 
+                  ? '#F0FDF4' // Light green for completed
+                  : isActive 
+                    ? `${domain.color_hex}10` 
+                    : undefined
               }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
