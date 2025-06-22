@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
-import DomainProgressSidebar from './domain-progress-sidebar';
 
 interface Question {
   id: number;
@@ -362,38 +361,31 @@ export default function AssessmentFlowV2() {
   const domainProgress = calculateDomainProgress();
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Domain Progress Sidebar */}
-      <DomainProgressSidebar
-        domains={domains}
-        questions={questions}
-        responses={assessment.responses}
-        currentDomainId={currentQuestion?.domain_id || 0}
-      />
-      
-      {/* Main Content */}
-      <div className="flex-1 py-8">
-        <div className="container mx-auto px-6">
-          <QuestionCard
-            question={currentQuestion}
-            currentAnswer={currentResponse || null}
-            onAnswerSelect={handleAnswerSelect}
-            questionNumber={assessment.currentIndex + 1}
-            totalQuestions={questions.length}
-            domainProgress={domainProgress}
-            questionIndex={assessment.currentIndex}
-          />
-          <AssessmentNavigation
-            currentQuestion={assessment.currentIndex + 1}
-            totalQuestions={questions.length}
-            canGoNext={canGoNext}
-            canGoPrevious={canGoPrevious}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            justSaved={false} // No auto-save indicator needed
-            domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
-          />
-        </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-6">
+        <QuestionCard
+          question={currentQuestion}
+          currentAnswer={currentResponse || null}
+          onAnswerSelect={handleAnswerSelect}
+          questionNumber={assessment.currentIndex + 1}
+          totalQuestions={questions.length}
+          domainProgress={domainProgress}
+          questionIndex={assessment.currentIndex}
+          domains={domains}
+          allQuestions={questions}
+          responses={assessment.responses}
+        />
+
+        <AssessmentNavigation
+          currentQuestion={assessment.currentIndex + 1}
+          totalQuestions={questions.length}
+          canGoNext={canGoNext}
+          canGoPrevious={canGoPrevious}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          justSaved={false}
+          domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
+        />
       </div>
     </div>
   );
