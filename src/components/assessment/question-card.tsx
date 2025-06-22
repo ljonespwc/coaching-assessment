@@ -104,7 +104,7 @@ export default function QuestionCard({
           return (
             <motion.div
               key={domain.id}
-              className={`relative p-3 rounded-lg border-2 transition-all duration-200 ${
+              className={`relative p-3 rounded-lg border-2 transition-all duration-200 group cursor-help ${
                 isActive 
                   ? 'border-current shadow-md' 
                   : 'border-gray-200'
@@ -148,6 +148,12 @@ export default function QuestionCard({
                     width: `${progress.percentage}%` 
                   }}
                 />
+              </div>
+
+              {/* Hover tooltip overlay */}
+              <div className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm text-gray-800 text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none flex flex-col justify-center border border-gray-200">
+                <div className="font-semibold mb-1 text-gray-900">{domain.name}</div>
+                <div className="text-gray-600 leading-tight">{domain.description}</div>
               </div>
 
               {/* Active indicator */}
