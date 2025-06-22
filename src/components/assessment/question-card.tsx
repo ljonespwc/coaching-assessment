@@ -96,11 +96,11 @@ export default function QuestionCard({
   const getStatusColor = (status: 'not-started' | 'in-progress' | 'complete', domainColor: string) => {
     switch (status) {
       case 'complete':
-        return domainColor;
+        return '#10B981'; // Green for completed
       case 'in-progress':
         return domainColor;
       case 'not-started':
-        return '#D1D5DB';
+        return '#D1D5DB'; // Grey for not started
     }
   };
 
@@ -114,7 +114,7 @@ export default function QuestionCard({
         <div className="space-y-2">
           {/* Overall progress */}
           <div className="text-sm text-gray-600">
-            Question {questionNumber} of {totalQuestions}
+            Displaying: Question {questionNumber} of {totalQuestions}
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
@@ -158,10 +158,7 @@ export default function QuestionCard({
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
                   style={{ backgroundColor: statusColor }}
                 >
-                  {status === 'complete' || status === 'in-progress' ? 
-                    getStatusIcon(status) : 
-                    domain.icon_emoji
-                  }
+                  {status === 'complete' ? '✓' : ''}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 text-sm">
@@ -178,7 +175,7 @@ export default function QuestionCard({
                 <div 
                   className="h-2 rounded-full transition-all duration-300"
                   style={{ 
-                    backgroundColor: statusColor,
+                    backgroundColor: domain.color_hex,
                     width: `${progress.percentage}%` 
                   }}
                 />
