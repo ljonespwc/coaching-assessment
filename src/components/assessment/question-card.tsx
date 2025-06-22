@@ -38,6 +38,8 @@ interface QuestionCardProps {
   allQuestions: Question[];
   responses: Record<string, number>;
   celebratingDomains?: Set<number>;
+  showSaved?: boolean;
+  isComplete?: boolean;
 }
 
 const LIKERT_OPTIONS = [
@@ -58,7 +60,9 @@ export default function QuestionCard({
   domains,
   allQuestions,
   responses,
-  celebratingDomains = new Set()
+  celebratingDomains = new Set(),
+  showSaved = false,
+  isComplete = false
 }: QuestionCardProps) {
   const domainColor = question.domains?.color_hex || '#6B7280';
   const [clickedButton, setClickedButton] = useState<number | null>(null);
@@ -302,21 +306,24 @@ export default function QuestionCard({
             <motion.button
               key={option.value}
               onClick={() => {
-                setClickedButton(option.value);
-                setTimeout(() => setClickedButton(null), 600);
-                onAnswerSelect(option.value);
+                if (!isComplete) {
+                  setClickedButton(option.value);
+                  setTimeout(() => setClickedButton(null), 600);
+                  onAnswerSelect(option.value);
+                }
               }}
               className={`relative overflow-hidden flex-1 p-4 rounded-lg border-2 transition-all duration-200 ${
                 currentAnswer === option.value
-                  ? 'border-current text-white'
-                  : 'border-gray-300 text-gray-700 hover:border-gray-400'
-              }`}
+                  ? 'text-white border-transparent' 
+                  : 'text-gray-700 border-gray-300 hover:border-gray-400'
+              } ${isComplete ? 'opacity-60' : ''}`}
               style={{
                 backgroundColor: currentAnswer === option.value ? domainColor : 'transparent',
-                borderColor: currentAnswer === option.value ? domainColor : undefined
+                borderColor: currentAnswer === option.value ? domainColor : undefined,
+                cursor: isComplete ? 'not-allowed' : 'pointer'
               }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: isComplete ? 1 : 1.02 }}
+              whileTap={{ scale: isComplete ? 1 : 0.98 }}
             >
               <div className="text-center relative z-10">
                 <div className="text-2xl font-bold mb-2">{option.value}</div>
@@ -340,6 +347,18 @@ export default function QuestionCard({
           ))}
         </div>
       </div>
+
+      {/* Saved indicator */}
+      {showSaved && (
+        <motion.div
+          className="absolute top-0 right-0 p-2 rounded-lg bg-green-100 text-green-600 text-sm"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+        >
+          ✓ Saved
+        </motion.div>
+      )}
     </div>
   );
 }

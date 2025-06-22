@@ -48,6 +48,10 @@ export default function AssessmentFlowV2() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Auto-advance state
+  const [showSaved, setShowSaved] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+
   // Guard to prevent multiple initializations
   const initializationRef = useRef(false);
 
@@ -266,65 +270,67 @@ export default function AssessmentFlowV2() {
   };
 
   // Handle answer selection (no saving - just update state)
-  const handleAnswerSelect = (value: number) => {
+  const handleAnswerSelect = async (value: number) => {
     const currentQuestion = questions[assessment.currentIndex];
-    if (!currentQuestion) return;
+    if (!currentQuestion || isAdvancing) return;
+
+    // Update response in state
+    const updatedResponses = {
+      ...assessment.responses,
+      [currentQuestion.id]: value
+    };
 
     setAssessment(prev => ({
       ...prev,
-      responses: {
-        ...prev.responses,
-        [currentQuestion.id]: value
-      }
+      responses: updatedResponses
     }));
-  };
 
-  // Handle navigation - this is where we save
-  const handleNext = async () => {
-    const currentQuestion = questions[assessment.currentIndex];
-    const currentResponse = assessment.responses[currentQuestion.id];
-    
-    if (currentResponse === undefined) return; // No answer selected
+    // Show saved indicator and start auto-advance
+    setIsAdvancing(true);
+    setShowSaved(true);
 
-    // Save current response
-    await saveResponse(currentQuestion.id.toString(), currentResponse);
+    // Save response to database
+    await saveResponse(currentQuestion.id.toString(), value);
 
     // Check for domain completion
-    checkDomainCompletion(currentQuestion.id, { ...assessment.responses, [currentQuestion.id]: currentResponse });
+    checkDomainCompletion(currentQuestion.id, updatedResponses);
 
+    // Auto-advance after delay (except on final question)
     if (assessment.currentIndex < questions.length - 1) {
-      // Move to next question
-      const newIndex = assessment.currentIndex + 1;
-      setAssessment(prev => ({ ...prev, currentIndex: newIndex }));
-      await updateProgress(newIndex);
+      setTimeout(async () => {
+        const newIndex = assessment.currentIndex + 1;
+        setAssessment(prev => ({ ...prev, currentIndex: newIndex }));
+        await updateProgress(newIndex);
+        setShowSaved(false);
+        setIsAdvancing(false);
+      }, 800);
     } else {
-      // Complete assessment
-      setShowCompletionCelebration(true);
-      
-      if (!assessment.id) {
-        return;
-      }
-
-      try {
-        await supabase
-          .from('assessments')
-          .update({
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', assessment.id);
-
-      } catch (err) {
-        console.error('⚠️ Failed to mark assessment complete:', err);
-      }
+      // Final question - just clear the advancing state
+      setTimeout(() => {
+        setShowSaved(false);
+        setIsAdvancing(false);
+      }, 800);
     }
   };
 
-  const handlePrevious = async () => {
-    if (assessment.currentIndex > 0) {
-      const newIndex = assessment.currentIndex - 1;
-      setAssessment(prev => ({ ...prev, currentIndex: newIndex }));
-      await updateProgress(newIndex);
+  // Handle final assessment completion
+  const handleComplete = async () => {
+    setShowCompletionCelebration(true);
+    
+    if (!assessment.id) {
+      return;
+    }
+
+    try {
+      await supabase
+        .from('assessments')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', assessment.id);
+    } catch (err) {
+      console.error('⚠️ Failed to mark assessment complete:', err);
     }
   };
 
@@ -407,14 +413,9 @@ export default function AssessmentFlowV2() {
   const currentQuestion = questions[assessment.currentIndex];
   const currentResponse = assessment.responses[currentQuestion.id];
   
-  // Check if there's a next question that's already been answered
-  const nextQuestionIndex = assessment.currentIndex + 1;
-  const nextQuestionAnswered = nextQuestionIndex < questions.length && 
-    assessment.responses[questions[nextQuestionIndex].id] !== undefined;
-  
-  // Can go next if: 1) current question is answered, OR 2) next question is already answered (reviewing)
-  const canGoNext = currentResponse !== undefined || nextQuestionAnswered;
-  const canGoPrevious = assessment.currentIndex > 0;
+  // Check if we're on the final question and it's been answered
+  const isOnFinalQuestion = assessment.currentIndex === questions.length - 1;
+  const finalQuestionAnswered = isOnFinalQuestion && currentResponse !== undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -430,24 +431,24 @@ export default function AssessmentFlowV2() {
           allQuestions={questions}
           responses={assessment.responses}
           celebratingDomains={celebratingDomains}
+          showSaved={showSaved}
+          isComplete={isOnFinalQuestion && finalQuestionAnswered}
         />
 
-        <AssessmentNavigation
-          currentQuestion={assessment.currentIndex + 1}
-          totalQuestions={questions.length}
-          canGoNext={canGoNext}
-          canGoPrevious={canGoPrevious}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          justSaved={false}
-          domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
+        {/* Only show navigation on final question */}
+        {isOnFinalQuestion && finalQuestionAnswered && !isAdvancing && (
+          <AssessmentNavigation
+            onComplete={handleComplete}
+            justSaved={showSaved}
+            domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
+          />
+        )}
+
+        <CompletionCelebration
+          isComplete={showCompletionCelebration}
+          onComplete={() => setShowCompletionCelebration(false)}
         />
       </div>
-
-      <CompletionCelebration
-        isComplete={showCompletionCelebration}
-        onComplete={() => setShowCompletionCelebration(false)}
-      />
     </div>
   );
 }

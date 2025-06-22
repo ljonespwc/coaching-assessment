@@ -2,26 +2,15 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface AssessmentNavigationProps {
-  currentQuestion: number;
-  totalQuestions: number;
-  canGoNext: boolean;
-  canGoPrevious: boolean;
-  onNext: () => void;
-  onPrevious: () => void;
+  onComplete: () => void;
   justSaved?: boolean;
   domainColor?: string;
 }
 
 export default function AssessmentNavigation({
-  currentQuestion,
-  totalQuestions,
-  canGoNext,
-  canGoPrevious,
-  onNext,
-  onPrevious,
+  onComplete,
   justSaved = false,
   domainColor = '#3B82F6'
 }: AssessmentNavigationProps) {
@@ -33,22 +22,6 @@ export default function AssessmentNavigation({
       className="max-w-4xl mx-auto p-6"
     >
       <div className="flex items-center justify-center gap-8">
-        {/* Previous Button */}
-        <button
-          onClick={onPrevious}
-          disabled={!canGoPrevious}
-          className={`w-32 px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 border-2 ${
-            !canGoPrevious ? 'opacity-50 cursor-not-allowed text-gray-400 border-gray-300' : 'hover:opacity-90'
-          }`}
-          style={{
-            borderColor: canGoPrevious ? domainColor : undefined,
-            color: canGoPrevious ? domainColor : undefined
-          }}
-        >
-          <ChevronLeftIcon className="w-4 h-4" />
-          Previous
-        </button>
-
         {/* Auto-save indicator */}
         <AnimatePresence>
           {justSaved && (
@@ -66,20 +39,15 @@ export default function AssessmentNavigation({
           )}
         </AnimatePresence>
 
-        {/* Next Button */}
+        {/* See My Score Button */}
         <button
-          onClick={onNext}
-          disabled={!canGoNext}
-          className={`w-32 px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 text-white ${
-            !canGoNext ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
-          }`}
+          onClick={onComplete}
+          className="px-8 py-3 rounded-lg font-medium text-white transition-all duration-200 hover:opacity-90 text-lg"
           style={{ 
-            backgroundColor: canGoNext ? domainColor : '#9CA3AF',
-            borderColor: canGoNext ? domainColor : '#9CA3AF'
+            backgroundColor: domainColor
           }}
         >
-          {currentQuestion === totalQuestions ? 'See My Score' : 'Next'}
-          {currentQuestion < totalQuestions && <ChevronRightIcon className="w-4 h-4" />}
+          See My Score
         </button>
       </div>
     </motion.div>
