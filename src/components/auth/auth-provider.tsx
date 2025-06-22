@@ -3,13 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { getPersistentFingerprint } from '@/lib/fingerprint';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  fingerprint: string | null;
   signInWithEmail: (email: string, name?: string) => Promise<{ error: unknown }>;
   signOut: () => Promise<void>;
 }
@@ -18,7 +16,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  fingerprint: null,
   signInWithEmail: async () => ({ error: null }),
   signOut: async () => {},
 });
@@ -39,7 +36,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fingerprint, setFingerprint] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -92,14 +88,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    const loadFingerprint = async () => {
-      const fingerprint = await getPersistentFingerprint();
-      setFingerprint(fingerprint);
-    };
-    loadFingerprint();
   }, []);
 
   const createUserProfile = async (user: User) => {
@@ -160,7 +148,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     session,
     loading,
-    fingerprint,
     signInWithEmail,
     signOut,
   };

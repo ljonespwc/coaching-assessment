@@ -31,7 +31,7 @@ interface AssessmentState {
 }
 
 export default function AssessmentFlowV2() {
-  const { user } = useAuth(); // Remove fingerprint dependency
+  const { user } = useAuth();
   
   // Test auto-deploy after making repo public and reconnecting
   // Simple state - no complex flags
