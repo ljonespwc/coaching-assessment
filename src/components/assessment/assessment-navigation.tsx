@@ -35,80 +35,54 @@ export default function AssessmentNavigation({
     >
       <div className="flex items-center justify-between">
         {/* Previous Button */}
-        <Button
-          variant="outline"
+        <button
           onClick={onPrevious}
           disabled={!canGoPrevious}
-          className="flex items-center gap-2"
+          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 border-2 ${
+            !canGoPrevious ? 'opacity-50 cursor-not-allowed text-gray-400 border-gray-300' : 'hover:opacity-90'
+          }`}
+          style={{
+            borderColor: canGoPrevious ? domainColor : undefined,
+            color: canGoPrevious ? domainColor : undefined
+          }}
         >
           <ChevronLeftIcon className="w-4 h-4" />
           Previous
-        </Button>
+        </button>
 
-        {/* Question Counter & Save Status */}
-        <div className="flex items-center gap-4">
-          {/* Auto-save indicator */}
-          <AnimatePresence>
-            {justSaved && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-2 text-sm text-green-600"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                Saved
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Question progress */}
-          <div className="text-sm font-medium text-gray-700">
-            {currentQuestion} of {totalQuestions}
-          </div>
-        </div>
+        {/* Auto-save indicator */}
+        <AnimatePresence>
+          {justSaved && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center gap-2 text-sm text-green-600"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Saved
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Next Button */}
-        <Button
-          variant="primary"
+        <button
           onClick={onNext}
           disabled={!canGoNext}
-          className="flex items-center gap-2"
+          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 text-white ${
+            !canGoNext ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+          }`}
           style={{ 
-            backgroundColor: canGoNext ? domainColor : undefined,
-            borderColor: canGoNext ? domainColor : undefined
+            backgroundColor: canGoNext ? domainColor : '#9CA3AF',
+            borderColor: canGoNext ? domainColor : '#9CA3AF'
           }}
         >
           {currentQuestion === totalQuestions ? 'Complete Assessment' : 'Next'}
           {currentQuestion < totalQuestions && <ChevronRightIcon className="w-4 h-4" />}
-        </Button>
+        </button>
       </div>
-
-      {/* Progress indicator */}
-      <div className="mt-4">
-        <div className="w-full bg-gray-200 rounded-full h-1">
-          <motion.div
-            className="h-1 rounded-full"
-            style={{ backgroundColor: domainColor }}
-            initial={{ width: 0 }}
-            animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-        </div>
-      </div>
-
-      {/* Validation message */}
-      {!canGoNext && currentQuestion < totalQuestions && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-sm text-amber-600 mt-2 text-center"
-        >
-          Please select an answer to continue
-        </motion.p>
-      )}
     </motion.div>
   );
 }
