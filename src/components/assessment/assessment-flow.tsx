@@ -374,25 +374,15 @@ export default function AssessmentFlowV2() {
       {/* Main Content */}
       <div className="flex-1 py-8">
         <div className="container mx-auto px-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={assessment.currentIndex}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-            >
-              <QuestionCard
-                question={currentQuestion}
-                currentAnswer={currentResponse || null}
-                onAnswerSelect={handleAnswerSelect}
-                questionNumber={assessment.currentIndex + 1}
-                totalQuestions={questions.length}
-                domainProgress={domainProgress}
-              />
-            </motion.div>
-          </AnimatePresence>
-
+          <QuestionCard
+            question={currentQuestion}
+            currentAnswer={currentResponse || null}
+            onAnswerSelect={handleAnswerSelect}
+            questionNumber={assessment.currentIndex + 1}
+            totalQuestions={questions.length}
+            domainProgress={domainProgress}
+            questionIndex={assessment.currentIndex}
+          />
           <AssessmentNavigation
             currentQuestion={assessment.currentIndex + 1}
             totalQuestions={questions.length}

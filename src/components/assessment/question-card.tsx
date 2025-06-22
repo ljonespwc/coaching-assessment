@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Question {
   id: number;
@@ -28,6 +28,7 @@ interface QuestionCardProps {
     current: number;
     total: number;
   };
+  questionIndex: number;
 }
 
 const LIKERT_OPTIONS = [
@@ -44,17 +45,13 @@ export default function QuestionCard({
   onAnswerSelect, 
   questionNumber, 
   totalQuestions,
-  domainProgress 
+  domainProgress,
+  questionIndex 
 }: QuestionCardProps) {
   const domainColor = question.domains?.color_hex || '#6B7280';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-4xl mx-auto"
-    >
+    <div className="w-full max-w-4xl mx-auto">
       {/* Header with progress and domain badge */}
       <div className="flex justify-between items-start mb-8">
         <div className="space-y-2">
@@ -108,9 +105,21 @@ export default function QuestionCard({
 
       {/* Question */}
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-900 leading-relaxed">
-          {question.question_text}
-        </h2>
+        <AnimatePresence mode="wait">
+          <motion.h2
+            key={questionIndex}
+            initial={{ opacity: 0, filter: "blur(4px)" }}
+            animate={{ opacity: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, filter: "blur(4px)" }}
+            transition={{ 
+              duration: 0.25,
+              ease: "easeInOut"
+            }}
+            className="text-2xl font-semibold text-gray-900 leading-relaxed"
+          >
+            {question.question_text}
+          </motion.h2>
+        </AnimatePresence>
       </div>
 
       {/* Likert Scale */}
@@ -142,6 +151,6 @@ export default function QuestionCard({
           ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
