@@ -55,17 +55,14 @@ export default function AssessmentFlowV2() {
   useEffect(() => {
     // Prevent multiple initializations
     if (initializationRef.current) {
-      console.log('🛑 Initialization already in progress, skipping...');
       return;
     }
 
     async function initialize() {
       initializationRef.current = true;
-      console.log('🚀 Starting assessment initialization...');
       
       try {
         // Step 1: Load questions (this always works)
-        console.log('📚 Loading questions...');
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select(`
@@ -93,8 +90,6 @@ export default function AssessmentFlowV2() {
           throw new Error('No questions found in database');
         }
 
-        console.log(`✅ Loaded ${questionsData.length} questions`);
-        
         // Transform the data to match our Question interface
         const transformedQuestions: Question[] = questionsData.map(q => ({
           id: q.id,
@@ -114,8 +109,6 @@ export default function AssessmentFlowV2() {
         const userId = user?.id;
 
         if (userId) {
-          console.log('👤 User available, loading/creating assessment...');
-          
           try {
             // Find existing assessment
             let existingAssessment = null;
@@ -132,8 +125,6 @@ export default function AssessmentFlowV2() {
             }
 
             if (existingAssessment) {
-              // Load existing assessment
-              console.log('✅ Found existing assessment:', existingAssessment.id);
               assessmentId = existingAssessment.id;
               
               // Load existing responses with timeout protection
@@ -152,7 +143,6 @@ export default function AssessmentFlowV2() {
                 if (responsesData && responsesData.length > 0) {
                   existingResponses = responsesData;
                   startIndex = responsesData.length; // Resume from next unanswered question
-                  console.log(`📍 Resuming from question ${startIndex + 1}`);
                 }
               } catch (err) {
                 console.error('⚠️ Failed to load existing responses, starting fresh:', err);
@@ -160,8 +150,6 @@ export default function AssessmentFlowV2() {
               }
             } else {
               // Create new assessment with race condition protection
-              console.log('📝 Creating new assessment...');
-              
               try {
                 const { data: newAssessment, error: insertError } = await supabase
                   .from('assessments')
@@ -177,7 +165,6 @@ export default function AssessmentFlowV2() {
                 if (insertError) {
                   // Check if it's a duplicate key error (another process created one)
                   if (insertError.code === '23505') {
-                    console.log('⚠️ Assessment already exists (race condition), fetching existing...');
                     const { data: existingAssessment } = await supabase
                       .from('assessments')
                       .select('id')
@@ -188,14 +175,12 @@ export default function AssessmentFlowV2() {
                     
                     if (existingAssessment) {
                       assessmentId = existingAssessment.id;
-                      console.log('✅ Using existing assessment from race condition:', assessmentId);
                     }
                   } else {
                     throw insertError;
                   }
                 } else if (newAssessment) {
                   assessmentId = newAssessment.id;
-                  console.log('✅ Created new assessment:', assessmentId);
                 }
               } catch (createError) {
                 console.error('⚠️ Failed to create assessment:', createError);
@@ -207,10 +192,10 @@ export default function AssessmentFlowV2() {
             // Continue without database - user can still take assessment
           }
         } else {
-          console.log('👤 No user - assessment will work in memory only');
         }
 
         // Step 3: Set final state
+        setQuestions(transformedQuestions);
         setAssessment({
           id: assessmentId,
           responses: existingResponses.reduce((acc: Record<string, number>, response: AssessmentResponse) => {
@@ -220,8 +205,6 @@ export default function AssessmentFlowV2() {
           currentIndex: startIndex,
           isReady: true
         });
-
-        console.log('✅ Assessment ready:', { assessmentId, responseCount: existingResponses.length, startIndex });
 
       } catch (err) {
         console.error('❌ Critical error during initialization:', err);
@@ -240,7 +223,6 @@ export default function AssessmentFlowV2() {
   // Save response to database (only called on navigation)
   const saveResponse = async (questionId: string, responseValue: number) => {
     if (!assessment.id) {
-      console.log('💾 No assessment ID - saving to memory only');
       return;
     }
 
@@ -259,7 +241,6 @@ export default function AssessmentFlowV2() {
           onConflict: 'assessment_id,question_id'
         });
 
-      console.log('✅ Response saved:', { questionId, responseValue });
     } catch (err) {
       console.error('⚠️ Failed to save response:', err);
       // Continue anyway - don't block user
@@ -279,7 +260,6 @@ export default function AssessmentFlowV2() {
         })
         .eq('id', assessment.id);
 
-      console.log('✅ Progress updated:', newIndex);
     } catch (err) {
       console.error('⚠️ Failed to update progress:', err);
     }
@@ -319,13 +299,9 @@ export default function AssessmentFlowV2() {
       await updateProgress(newIndex);
     } else {
       // Complete assessment
-      console.log('🏆 Assessment completion triggered!');
-      
-      // Trigger completion celebration
       setShowCompletionCelebration(true);
       
       if (!assessment.id) {
-        console.log('Assessment completed (memory only)');
         return;
       }
 
@@ -338,8 +314,6 @@ export default function AssessmentFlowV2() {
           })
           .eq('id', assessment.id);
 
-        console.log('✅ Assessment completed!');
-        // TODO: Navigate to results page
       } catch (err) {
         console.error('⚠️ Failed to mark assessment complete:', err);
       }
@@ -379,9 +353,6 @@ export default function AssessmentFlowV2() {
 
   // Function to check and trigger domain completion celebrations
   const checkDomainCompletion = useCallback((questionId: number, updatedResponses: Record<string, number>) => {
-    console.log('🔍 Checking domain completion for question:', questionId);
-    console.log('📊 Updated responses:', Object.keys(updatedResponses).length);
-    
     const newlyCompleted: number[] = [];
     
     // Find which domain this question belongs to
@@ -395,18 +366,14 @@ export default function AssessmentFlowV2() {
     const domainQuestions = questions.filter(q => q.domain_id === currentDomain.id);
     const answeredCount = domainQuestions.filter(q => updatedResponses[q.id] !== undefined).length;
     
-    console.log(`📋 Domain ${currentDomain.name}: ${answeredCount} / ${domainQuestions.length}`);
-    
     // If this domain is now complete and we haven't celebrated it yet
     if (answeredCount === domainQuestions.length && 
         domainQuestions.length > 0 &&
         !alreadyCelebratedDomains.has(currentDomain.id)) {
-      console.log(`🎉 Domain "${currentDomain.name}" is complete!`);
       newlyCompleted.push(currentDomain.id);
     }
 
     if (newlyCompleted.length > 0) {
-      console.log('🎊 Triggering celebrations for domains:', newlyCompleted);
       
       // Mark these domains as celebrated
       setAlreadyCelebratedDomains(prev => new Set([...prev, ...newlyCompleted]));
@@ -422,8 +389,6 @@ export default function AssessmentFlowV2() {
           return newSet;
         });
       }, 2000);
-    } else {
-      console.log('🤷 No celebration needed');
     }
   }, [domains, questions, alreadyCelebratedDomains]);
 
