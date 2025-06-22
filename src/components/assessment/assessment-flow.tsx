@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
@@ -345,21 +344,6 @@ export default function AssessmentFlowV2() {
   const canGoNext = currentResponse !== undefined;
   const canGoPrevious = assessment.currentIndex > 0;
 
-  // Calculate domain progress for current question
-  const calculateDomainProgress = () => {
-    if (!currentQuestion?.domains) return { current: 0, total: 0 };
-    
-    const domainQuestions = questions.filter(q => q.domain_id === currentQuestion.domain_id);
-    const answeredInDomain = domainQuestions.filter(q => assessment.responses[q.id] !== undefined).length;
-    
-    return {
-      current: answeredInDomain,
-      total: domainQuestions.length
-    };
-  };
-
-  const domainProgress = calculateDomainProgress();
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-6">
@@ -369,7 +353,6 @@ export default function AssessmentFlowV2() {
           onAnswerSelect={handleAnswerSelect}
           questionNumber={assessment.currentIndex + 1}
           totalQuestions={questions.length}
-          domainProgress={domainProgress}
           questionIndex={assessment.currentIndex}
           domains={domains}
           allQuestions={questions}

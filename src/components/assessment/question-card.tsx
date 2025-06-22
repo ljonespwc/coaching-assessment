@@ -24,10 +24,6 @@ interface QuestionCardProps {
   onAnswerSelect: (value: number) => void;
   questionNumber: number;
   totalQuestions: number;
-  domainProgress: {
-    current: number;
-    total: number;
-  };
   questionIndex: number;
   domains: Array<{
     id: number;
@@ -55,7 +51,6 @@ export default function QuestionCard({
   onAnswerSelect, 
   questionNumber, 
   totalQuestions,
-  domainProgress,
   questionIndex,
   domains,
   allQuestions,
@@ -82,17 +77,6 @@ export default function QuestionCard({
     };
   };
 
-  const getStatusIcon = (status: 'not-started' | 'in-progress' | 'complete') => {
-    switch (status) {
-      case 'complete':
-        return '✓';
-      case 'in-progress':
-        return '◐';
-      case 'not-started':
-        return '○';
-    }
-  };
-
   const getStatusColor = (status: 'not-started' | 'in-progress' | 'complete', domainColor: string) => {
     switch (status) {
       case 'complete':
@@ -109,25 +93,6 @@ export default function QuestionCard({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Header with progress */}
-      <div className="mb-6">
-        <div className="space-y-2">
-          {/* Overall progress */}
-          <div className="text-sm text-gray-600">
-            Displaying: Question {questionNumber} of {totalQuestions}
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="h-2 rounded-full transition-all duration-300"
-              style={{ 
-                backgroundColor: '#3B82F6',
-                width: `${(questionNumber / totalQuestions) * 100}%` 
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Domain Progress Boxes */}
       <div className="mb-6 grid grid-cols-2 gap-3">
         {sortedDomains.map((domain) => {
@@ -193,6 +158,24 @@ export default function QuestionCard({
             </motion.div>
           );
         })}
+      </div>
+
+      {/* Overall Progress */}
+      <div className="mb-6">
+        <div className="space-y-2">
+          <div className="text-sm text-gray-600">
+            Displaying: Question {questionNumber} of {totalQuestions}
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="h-2 rounded-full transition-all duration-300"
+              style={{ 
+                backgroundColor: '#3B82F6',
+                width: `${(questionNumber / totalQuestions) * 100}%` 
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Question */}
