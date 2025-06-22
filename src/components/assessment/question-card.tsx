@@ -104,7 +104,7 @@ export default function QuestionCard({
       </div>
 
       {/* Question */}
-      <div className="mb-8">
+      <div className="mb-8 min-h-[120px] flex items-center">
         <AnimatePresence mode="wait">
           <motion.h2
             key={questionIndex}
@@ -115,7 +115,7 @@ export default function QuestionCard({
               duration: 0.25,
               ease: "easeInOut"
             }}
-            className="text-2xl font-semibold text-gray-900 leading-relaxed"
+            className="text-2xl font-semibold text-gray-900 leading-relaxed w-full"
           >
             {question.question_text}
           </motion.h2>

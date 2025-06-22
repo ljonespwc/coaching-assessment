@@ -33,12 +33,12 @@ export default function AssessmentNavigation({
       transition={{ duration: 0.3, delay: 0.2 }}
       className="max-w-4xl mx-auto p-6"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center gap-8">
         {/* Previous Button */}
         <button
           onClick={onPrevious}
           disabled={!canGoPrevious}
-          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 border-2 ${
+          className={`w-32 px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 border-2 ${
             !canGoPrevious ? 'opacity-50 cursor-not-allowed text-gray-400 border-gray-300' : 'hover:opacity-90'
           }`}
           style={{
@@ -71,7 +71,7 @@ export default function AssessmentNavigation({
         <button
           onClick={onNext}
           disabled={!canGoNext}
-          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 text-white ${
+          className={`w-32 px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 text-white ${
             !canGoNext ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
           }`}
           style={{ 
@@ -79,7 +79,7 @@ export default function AssessmentNavigation({
             borderColor: canGoNext ? domainColor : '#9CA3AF'
           }}
         >
-          {currentQuestion === totalQuestions ? 'Complete Assessment' : 'Next'}
+          {currentQuestion === totalQuestions ? 'Complete' : 'Next'}
           {currentQuestion < totalQuestions && <ChevronRightIcon className="w-4 h-4" />}
         </button>
       </div>
