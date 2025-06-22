@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
@@ -48,9 +48,19 @@ export default function AssessmentFlowV2() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Guard to prevent multiple initializations
+  const initializationRef = useRef(false);
+
   // Initialize on mount
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initializationRef.current) {
+      console.log('🛑 Initialization already in progress, skipping...');
+      return;
+    }
+
     async function initialize() {
+      initializationRef.current = true;
       console.log('🚀 Starting assessment initialization...');
       
       try {
@@ -149,23 +159,47 @@ export default function AssessmentFlowV2() {
                 // Continue with empty responses - user can still take assessment
               }
             } else {
-              // Create new assessment
+              // Create new assessment with race condition protection
               console.log('📝 Creating new assessment...');
               
-              const { data: newAssessment } = await supabase
-                .from('assessments')
-                .insert({
-                  user_id: userId,
-                  assessment_type: 'full',
-                  status: 'in_progress',
-                  current_question_index: 0
-                })
-                .select('id')
-                .single();
+              try {
+                const { data: newAssessment, error: insertError } = await supabase
+                  .from('assessments')
+                  .insert({
+                    user_id: userId,
+                    assessment_type: 'full',
+                    status: 'in_progress',
+                    current_question_index: 0
+                  })
+                  .select('id')
+                  .single();
 
-              if (newAssessment) {
-                assessmentId = newAssessment.id;
-                console.log('✅ Created new assessment:', assessmentId);
+                if (insertError) {
+                  // Check if it's a duplicate key error (another process created one)
+                  if (insertError.code === '23505') {
+                    console.log('⚠️ Assessment already exists (race condition), fetching existing...');
+                    const { data: existingAssessment } = await supabase
+                      .from('assessments')
+                      .select('id')
+                      .eq('user_id', userId)
+                      .eq('status', 'in_progress')
+                      .limit(1)
+                      .single();
+                    
+                    if (existingAssessment) {
+                      assessmentId = existingAssessment.id;
+                      console.log('✅ Using existing assessment from race condition:', assessmentId);
+                    }
+                  } else {
+                    throw insertError;
+                  }
+                } else if (newAssessment) {
+                  assessmentId = newAssessment.id;
+                  console.log('✅ Created new assessment:', assessmentId);
+                }
+              } catch (createError) {
+                console.error('⚠️ Failed to create assessment:', createError);
+                // Continue without database - user can still take assessment
               }
             }
           } catch (err) {
@@ -191,6 +225,8 @@ export default function AssessmentFlowV2() {
 
       } catch (err) {
         console.error('❌ Critical error during initialization:', err);
+        // Reset guard so user can retry if needed
+        initializationRef.current = false;
         // Even on error, show questions so user can still take assessment
         setAssessment(prev => ({ ...prev, isReady: true }));
       } finally {
@@ -273,6 +309,9 @@ export default function AssessmentFlowV2() {
     // Save current response
     await saveResponse(currentQuestion.id.toString(), currentResponse);
 
+    // Check for domain completion
+    checkDomainCompletion(currentQuestion.id, { ...assessment.responses, [currentQuestion.id]: currentResponse });
+
     if (assessment.currentIndex < questions.length - 1) {
       // Move to next question
       const newIndex = assessment.currentIndex + 1;
@@ -280,6 +319,11 @@ export default function AssessmentFlowV2() {
       await updateProgress(newIndex);
     } else {
       // Complete assessment
+      console.log('🏆 Assessment completion triggered!');
+      
+      // Trigger completion celebration
+      setShowCompletionCelebration(true);
+      
       if (!assessment.id) {
         console.log('Assessment completed (memory only)');
         return;
@@ -328,23 +372,60 @@ export default function AssessmentFlowV2() {
     return uniqueDomains.sort((a, b) => a.display_order - b.display_order);
   }, [questions]);
 
-  // Check if all domains are complete
-  const allDomainsComplete = useMemo(() => {
-    return domains.every(domain => {
-      const domainQuestions = questions.filter(q => q.domain_id === domain.id);
-      const answeredCount = domainQuestions.filter(q => assessment.responses[q.id] !== undefined).length;
-      return answeredCount === domainQuestions.length && domainQuestions.length > 0;
-    });
-  }, [domains, questions, assessment.responses]);
-
+  // Track domain completion for celebrations
+  const [celebratingDomains, setCelebratingDomains] = useState<Set<number>>(new Set());
+  const [alreadyCelebratedDomains, setAlreadyCelebratedDomains] = useState<Set<number>>(new Set());
   const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
 
-  // Trigger celebration when all domains complete
-  useEffect(() => {
-    if (allDomainsComplete && questions.length > 0 && !showCompletionCelebration) {
-      setShowCompletionCelebration(true);
+  // Function to check and trigger domain completion celebrations
+  const checkDomainCompletion = useCallback((questionId: number, updatedResponses: Record<string, number>) => {
+    console.log('🔍 Checking domain completion for question:', questionId);
+    console.log('📊 Updated responses:', Object.keys(updatedResponses).length);
+    
+    const newlyCompleted: number[] = [];
+    
+    // Find which domain this question belongs to
+    const currentQuestion = questions.find(q => q.id === questionId);
+    if (!currentQuestion) return;
+    
+    const currentDomain = domains.find(d => d.id === currentQuestion.domain_id);
+    if (!currentDomain) return;
+    
+    // Check if this domain is now complete
+    const domainQuestions = questions.filter(q => q.domain_id === currentDomain.id);
+    const answeredCount = domainQuestions.filter(q => updatedResponses[q.id] !== undefined).length;
+    
+    console.log(`📋 Domain ${currentDomain.name}: ${answeredCount} / ${domainQuestions.length}`);
+    
+    // If this domain is now complete and we haven't celebrated it yet
+    if (answeredCount === domainQuestions.length && 
+        domainQuestions.length > 0 &&
+        !alreadyCelebratedDomains.has(currentDomain.id)) {
+      console.log(`🎉 Domain "${currentDomain.name}" is complete!`);
+      newlyCompleted.push(currentDomain.id);
     }
-  }, [allDomainsComplete, questions.length, showCompletionCelebration]);
+
+    if (newlyCompleted.length > 0) {
+      console.log('🎊 Triggering celebrations for domains:', newlyCompleted);
+      
+      // Mark these domains as celebrated
+      setAlreadyCelebratedDomains(prev => new Set([...prev, ...newlyCompleted]));
+      
+      // Trigger celebrations
+      setCelebratingDomains(prev => new Set([...prev, ...newlyCompleted]));
+      
+      // Clear celebrations after 2 seconds
+      setTimeout(() => {
+        setCelebratingDomains(prev => {
+          const newSet = new Set(prev);
+          newlyCompleted.forEach(id => newSet.delete(id));
+          return newSet;
+        });
+      }, 2000);
+    } else {
+      console.log('🤷 No celebration needed');
+    }
+  }, [domains, questions, alreadyCelebratedDomains]);
 
   // Loading state
   if (loading || !assessment.isReady || questions.length === 0) {
@@ -383,6 +464,7 @@ export default function AssessmentFlowV2() {
           domains={domains}
           allQuestions={questions}
           responses={assessment.responses}
+          celebratingDomains={celebratingDomains}
         />
 
         <AssessmentNavigation

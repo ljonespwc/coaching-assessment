@@ -18,6 +18,15 @@ interface Question {
   } | null;
 }
 
+interface Domain {
+  id: number;
+  name: string;
+  description: string;
+  color_hex: string;
+  icon_emoji: string;
+  display_order: number;
+}
+
 interface QuestionCardProps {
   question: Question;
   currentAnswer: number | null;
@@ -25,16 +34,10 @@ interface QuestionCardProps {
   questionNumber: number;
   totalQuestions: number;
   questionIndex: number;
-  domains: Array<{
-    id: number;
-    name: string;
-    description: string;
-    color_hex: string;
-    icon_emoji: string;
-    display_order: number;
-  }>;
-  allQuestions: Array<{ id: number; domain_id: number; }>;
-  responses: Record<number, number>;
+  domains: Domain[];
+  allQuestions: Question[];
+  responses: Record<string, number>;
+  celebratingDomains?: Set<number>;
 }
 
 const LIKERT_OPTIONS = [
@@ -54,11 +57,11 @@ export default function QuestionCard({
   questionIndex,
   domains,
   allQuestions,
-  responses
+  responses,
+  celebratingDomains = new Set()
 }: QuestionCardProps) {
   const domainColor = question.domains?.color_hex || '#6B7280';
   const [clickedButton, setClickedButton] = useState<number | null>(null);
-  const [celebratingDomains, setCelebratingDomains] = useState<Set<number>>(new Set());
 
   const getDomainStatus = (domainId: number): 'not-started' | 'in-progress' | 'complete' => {
     const domainQuestions = allQuestions.filter(q => q.domain_id === domainId);
@@ -72,20 +75,6 @@ export default function QuestionCard({
   const getDomainProgress = (domainId: number) => {
     const domainQuestions = allQuestions.filter(q => q.domain_id === domainId);
     const answeredCount = domainQuestions.filter(q => responses[q.id] !== undefined).length;
-    const wasComplete = celebratingDomains.has(domainId);
-    const isNowComplete = answeredCount === domainQuestions.length && domainQuestions.length > 0;
-    
-    // Trigger celebration if domain just completed
-    if (isNowComplete && !wasComplete && answeredCount > 0) {
-      setCelebratingDomains(prev => new Set([...prev, domainId]));
-      setTimeout(() => {
-        setCelebratingDomains(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(domainId);
-          return newSet;
-        });
-      }, 2000);
-    }
     
     return {
       current: answeredCount,
@@ -198,7 +187,7 @@ export default function QuestionCard({
 
               {/* Celebration */}
               {celebratingDomains.has(domain.id) && (
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center z-20">
                   <motion.div
                     className="text-4xl font-bold text-white"
                     initial={{ scale: 0, opacity: 0 }}
@@ -208,7 +197,7 @@ export default function QuestionCard({
                     🎉
                   </motion.div>
                   <motion.div
-                    className="absolute inset-0"
+                    className="absolute inset-0 rounded-lg"
                     style={{ backgroundColor: domain.color_hex }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.5 }}
