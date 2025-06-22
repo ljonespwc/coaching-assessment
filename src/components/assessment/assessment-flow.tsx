@@ -191,7 +191,7 @@ export default function AssessmentFlowV2() {
     }
 
     initialize();
-  }, []);
+  }, [user]);
 
   // Save response to database (only called on navigation)
   const saveResponse = async (questionId: string, responseValue: number) => {
