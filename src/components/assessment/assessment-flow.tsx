@@ -341,7 +341,14 @@ export default function AssessmentFlowV2() {
 
   const currentQuestion = questions[assessment.currentIndex];
   const currentResponse = assessment.responses[currentQuestion.id];
-  const canGoNext = currentResponse !== undefined;
+  
+  // Find the furthest question that has been answered
+  const furthestAnsweredIndex = questions.reduce((maxIndex, question, index) => {
+    return assessment.responses[question.id] !== undefined ? index : maxIndex;
+  }, -1);
+  
+  // Can go next if: 1) current question is answered, OR 2) we're reviewing (not at furthest point)
+  const canGoNext = currentResponse !== undefined || assessment.currentIndex <= furthestAnsweredIndex;
   const canGoPrevious = assessment.currentIndex > 0;
 
   return (
