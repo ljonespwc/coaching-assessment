@@ -78,7 +78,7 @@ export default function AssessmentNavigation({
             borderColor: canGoNext ? domainColor : '#9CA3AF'
           }}
         >
-          {currentQuestion === totalQuestions ? 'Complete' : 'Next'}
+          {currentQuestion === totalQuestions ? 'See My Score' : 'Next'}
           {currentQuestion < totalQuestions && <ChevronRightIcon className="w-4 h-4" />}
         </button>
       </div>

@@ -187,22 +187,66 @@ export default function QuestionCard({
 
               {/* Celebration */}
               {celebratingDomains.has(domain.id) && (
-                <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <motion.div
-                    className="text-4xl font-bold text-white"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    🎉
-                  </motion.div>
-                  <motion.div
-                    className="absolute inset-0 rounded-lg"
-                    style={{ backgroundColor: domain.color_hex }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.5 }}
-                    transition={{ duration: 0.3 }}
-                  />
+                <div className="absolute inset-0 overflow-hidden rounded-lg z-20 pointer-events-none">
+                  {/* Confetti particles */}
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: i % 3 === 0 ? domain.color_hex : 
+                                       i % 3 === 1 ? '#FFD700' : '#FF6B6B',
+                        left: '50%',
+                        top: '50%'
+                      }}
+                      initial={{ 
+                        scale: 0,
+                        x: 0,
+                        y: 0,
+                        opacity: 1
+                      }}
+                      animate={{ 
+                        scale: [0, 1, 0],
+                        x: (Math.cos((i * 30) * Math.PI / 180) * (30 + Math.random() * 20)),
+                        y: (Math.sin((i * 30) * Math.PI / 180) * (30 + Math.random() * 20)),
+                        opacity: [1, 1, 0]
+                      }}
+                      transition={{ 
+                        duration: 1.5,
+                        ease: "easeOut",
+                        delay: i * 0.05
+                      }}
+                    />
+                  ))}
+                  
+                  {/* Additional sparkle particles */}
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <motion.div
+                      key={`sparkle-${i}`}
+                      className="absolute w-1 h-1 rounded-full bg-yellow-300"
+                      style={{ 
+                        left: '50%',
+                        top: '50%'
+                      }}
+                      initial={{ 
+                        scale: 0,
+                        x: 0,
+                        y: 0,
+                        opacity: 1
+                      }}
+                      animate={{ 
+                        scale: [0, 1.5, 0],
+                        x: (Math.cos((i * 45 + 22.5) * Math.PI / 180) * (40 + Math.random() * 15)),
+                        y: (Math.sin((i * 45 + 22.5) * Math.PI / 180) * (40 + Math.random() * 15)),
+                        opacity: [1, 1, 0]
+                      }}
+                      transition={{ 
+                        duration: 1.2,
+                        ease: "easeOut",
+                        delay: 0.2 + i * 0.03
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </motion.div>
