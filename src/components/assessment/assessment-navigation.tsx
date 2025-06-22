@@ -13,6 +13,7 @@ interface AssessmentNavigationProps {
   onNext: () => void;
   onPrevious: () => void;
   justSaved?: boolean;
+  domainColor?: string;
 }
 
 export default function AssessmentNavigation({
@@ -22,7 +23,8 @@ export default function AssessmentNavigation({
   canGoPrevious,
   onNext,
   onPrevious,
-  justSaved = false
+  justSaved = false,
+  domainColor = '#3B82F6'
 }: AssessmentNavigationProps) {
   return (
     <motion.div
@@ -74,6 +76,10 @@ export default function AssessmentNavigation({
           onClick={onNext}
           disabled={!canGoNext}
           className="flex items-center gap-2"
+          style={{ 
+            backgroundColor: canGoNext ? domainColor : undefined,
+            borderColor: canGoNext ? domainColor : undefined
+          }}
         >
           {currentQuestion === totalQuestions ? 'Complete Assessment' : 'Next'}
           {currentQuestion < totalQuestions && <ChevronRightIcon className="w-4 h-4" />}
@@ -84,7 +90,8 @@ export default function AssessmentNavigation({
       <div className="mt-4">
         <div className="w-full bg-gray-200 rounded-full h-1">
           <motion.div
-            className="bg-blue-600 h-1 rounded-full"
+            className="h-1 rounded-full"
+            style={{ backgroundColor: domainColor }}
             initial={{ width: 0 }}
             animate={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}

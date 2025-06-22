@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
+import DomainProgressSidebar from './domain-progress-sidebar';
 
 interface Question {
   id: number;
@@ -13,8 +14,12 @@ interface Question {
   domain_id: number;
   question_order: number;
   domains: {
+    id: number;
     name: string;
     description: string;
+    color_hex: string;
+    icon_emoji: string;
+    display_order: number;
   } | null;
 }
 
@@ -60,8 +65,12 @@ export default function AssessmentFlowV2() {
             question_order,
             domain_id,
             domains (
+              id,
               name,
-              description
+              description,
+              color_hex,
+              icon_emoji,
+              display_order
             )
           `)
           .order('id');
@@ -302,6 +311,24 @@ export default function AssessmentFlowV2() {
     }
   };
 
+  // Get unique domains from questions
+  const domains = useMemo(() => {
+    const uniqueDomains = questions.reduce((acc, question) => {
+      if (question.domains && !acc.find(d => d.id === question.domains!.id)) {
+        acc.push(question.domains);
+      }
+      return acc;
+    }, [] as Array<{
+      id: number;
+      name: string;
+      description: string;
+      color_hex: string;
+      icon_emoji: string;
+      display_order: number;
+    }>);
+    return uniqueDomains.sort((a, b) => a.display_order - b.display_order);
+  }, [questions]);
+
   // Loading state
   if (loading || !assessment.isReady || questions.length === 0) {
     return (
@@ -319,36 +346,64 @@ export default function AssessmentFlowV2() {
   const canGoNext = currentResponse !== undefined;
   const canGoPrevious = assessment.currentIndex > 0;
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={assessment.currentIndex}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-          >
-            <QuestionCard
-              question={currentQuestion}
-              questionNumber={assessment.currentIndex + 1}
-              totalQuestions={questions.length}
-              onAnswerSelect={handleAnswerSelect}
-              selectedValue={currentResponse}
-            />
-          </motion.div>
-        </AnimatePresence>
+  // Calculate domain progress for current question
+  const calculateDomainProgress = () => {
+    if (!currentQuestion?.domains) return { current: 0, total: 0 };
+    
+    const domainQuestions = questions.filter(q => q.domain_id === currentQuestion.domain_id);
+    const answeredInDomain = domainQuestions.filter(q => assessment.responses[q.id] !== undefined).length;
+    
+    return {
+      current: answeredInDomain,
+      total: domainQuestions.length
+    };
+  };
 
-        <AssessmentNavigation
-          currentQuestion={assessment.currentIndex + 1}
-          totalQuestions={questions.length}
-          canGoNext={canGoNext}
-          canGoPrevious={canGoPrevious}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          justSaved={false} // No auto-save indicator needed
-        />
+  const domainProgress = calculateDomainProgress();
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Domain Progress Sidebar */}
+      <DomainProgressSidebar
+        domains={domains}
+        questions={questions}
+        responses={assessment.responses}
+        currentDomainId={currentQuestion?.domain_id || 0}
+      />
+      
+      {/* Main Content */}
+      <div className="flex-1 py-8">
+        <div className="container mx-auto px-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={assessment.currentIndex}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+            >
+              <QuestionCard
+                question={currentQuestion}
+                currentAnswer={currentResponse || null}
+                onAnswerSelect={handleAnswerSelect}
+                questionNumber={assessment.currentIndex + 1}
+                totalQuestions={questions.length}
+                domainProgress={domainProgress}
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          <AssessmentNavigation
+            currentQuestion={assessment.currentIndex + 1}
+            totalQuestions={questions.length}
+            canGoNext={canGoNext}
+            canGoPrevious={canGoPrevious}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            justSaved={false} // No auto-save indicator needed
+            domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
+          />
+        </div>
       </div>
     </div>
   );
