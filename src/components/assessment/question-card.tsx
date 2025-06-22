@@ -52,53 +52,21 @@ export default function QuestionCard({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Header with progress and domain badge */}
-      <div className="flex justify-between items-start mb-8">
+      {/* Header with progress */}
+      <div className="mb-8">
         <div className="space-y-2">
           {/* Overall progress */}
           <div className="text-sm text-gray-600">
             Question {questionNumber} of {totalQuestions}
           </div>
-          <div className="w-96 bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="h-2 rounded-full transition-all duration-300"
               style={{ 
-                backgroundColor: domainColor,
+                backgroundColor: '#3B82F6',
                 width: `${(questionNumber / totalQuestions) * 100}%` 
               }}
             />
-          </div>
-          
-          {/* Domain-specific progress */}
-          <div className="text-sm text-gray-600">
-            {question.domains?.name}: {domainProgress.current} of {domainProgress.total}
-          </div>
-          <div className="w-96 bg-gray-200 rounded-full h-1.5">
-            <div 
-              className="h-1.5 rounded-full transition-all duration-300"
-              style={{ 
-                backgroundColor: domainColor,
-                width: `${(domainProgress.current / domainProgress.total) * 100}%` 
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Domain badge with tooltip */}
-        <div className="relative group">
-          <div 
-            className="px-4 py-2 rounded-full text-white text-sm font-medium flex items-center gap-2 cursor-help"
-            style={{ backgroundColor: domainColor }}
-          >
-            <span>{question.domains?.icon_emoji}</span>
-            <span>{question.domains?.name}</span>
-          </div>
-          
-          {/* Tooltip */}
-          <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 text-white text-sm rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-            <div className="font-medium mb-1">{question.domains?.name}</div>
-            <div className="text-gray-300">{question.domains?.description}</div>
-            <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45"></div>
           </div>
         </div>
       </div>
