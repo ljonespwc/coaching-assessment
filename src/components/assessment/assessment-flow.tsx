@@ -280,16 +280,16 @@ export default function AssessmentFlow() {
         setIsAdvancing(false);
       }, 800);
     } else {
+      // Final question - show trophy celebration immediately
       setTimeout(() => {
         setShowSaved(false);
         setIsAdvancing(false);
+        setShowCompletionCelebration(true);
       }, 800);
     }
   };
 
   const handleComplete = async () => {
-    setShowCompletionCelebration(true);
-    
     try {
       if (state.assessment) {
         await httpRequest(`/assessments?id=eq.${state.assessment.id}`, {
@@ -303,6 +303,9 @@ export default function AssessmentFlow() {
     } catch (error) {
       console.error('Failed to complete assessment:', error);
     }
+    
+    // Navigate to results page
+    window.location.href = '/results';
   };
 
   if (state.loading) {
