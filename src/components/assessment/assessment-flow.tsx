@@ -104,8 +104,8 @@ export default function AssessmentFlow() {
       
       const accessToken = session?.access_token;
       
-      // Load questions with domain information
-      const questionsData = await httpRequest('/questions?select=id,question_text,question_order,domain_id,domains(*)', {}, accessToken) as unknown[];
+      // Load questions with domain information, sorted by domain_id then question_order
+      const questionsData = await httpRequest('/questions?select=id,question_text,question_order,domain_id,domains(*)&order=domain_id.asc,question_order.asc', {}, accessToken) as unknown[];
       const questions: Question[] = questionsData.map((q: unknown) => {
         const question = q as Record<string, unknown>;
         return {
