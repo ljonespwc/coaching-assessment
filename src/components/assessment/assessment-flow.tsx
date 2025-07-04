@@ -124,7 +124,7 @@ export default function AssessmentFlow() {
       if (user?.id) {
         // Find or create assessment for the current user
         try {
-          const existingData = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress`, {}, accessToken) as unknown[];
+          const existingData = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress&select=*&order=updated_at.desc`, {}, accessToken) as unknown[];
           
           if (existingData.length > 0) {
             assessment = existingData[0] as Assessment;
@@ -143,7 +143,7 @@ export default function AssessmentFlow() {
           console.error('Assessment creation failed:', error);
         }
 
-        if (assessment) {
+        if (assessment && assessment.id) {
           // Load existing responses for this assessment
           const existingResponses = await httpRequest(`/assessment_responses?assessment_id=eq.${assessment.id}&select=question_id,response_value,domain_id`, {}, accessToken) as AssessmentResponse[];
           
@@ -152,11 +152,8 @@ export default function AssessmentFlow() {
             return acc;
           }, {});
           
+          // Use the saved current_question_index from the database
           currentIndex = Math.max(0, assessment.current_question_index || 0);
-          
-          if (existingResponses.length > 0) {
-            currentIndex = Math.min(existingResponses.length, questions.length - 1);
-          }
         }
       }
 
