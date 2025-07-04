@@ -34,16 +34,8 @@ export default function EmailGate({ onBack }: EmailGateProps) {
     setError(null);
 
     try {
-      const { error } = await signInWithEmail(email.trim(), name.trim() || undefined);
-      
-      if (error) {
-        const errorMessage = error && typeof error === 'object' && 'message' in error 
-          ? (error as { message: string }).message 
-          : 'Failed to send magic link';
-        setError(errorMessage);
-      } else {
-        setEmailSent(true);
-      }
+      await signInWithEmail(email.trim(), name.trim() || undefined);
+      setEmailSent(true);
     } catch (error) {
       console.error('Sign in error:', error);
       setError('An unexpected error occurred');

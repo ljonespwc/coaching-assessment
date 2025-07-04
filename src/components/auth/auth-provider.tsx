@@ -2,13 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { AuthService } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signInWithEmail: (email: string, name?: string) => Promise<{ error: unknown }>;
+  signInWithEmail: (email: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  signInWithEmail: async () => ({ error: null }),
+  signInWithEmail: async () => {},
   signOut: async () => {},
 });
 
@@ -40,21 +40,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let mounted = true;
     
-    // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const currentSession = await AuthService.getSession();
         
         if (!mounted) return;
         
-        if (error) {
-          console.error('Error getting session:', error);
-        } else {
-          setSession(session);
-          setUser(session?.user ?? null);
-        }
-      } catch (err) {
-        console.error('Session restoration failed:', err);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+      } catch (error) {
+        console.error('Auth initialization failed:', error);
         if (mounted) {
           setSession(null);
           setUser(null);
@@ -66,10 +61,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = AuthService.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
@@ -77,9 +71,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Create user profile if new user
         if (event === 'SIGNED_IN' && session?.user) {
-          await createUserProfile(session.user);
+          try {
+            await AuthService.createUserProfile(session.user);
+          } catch (error) {
+            console.error('Failed to create user profile:', error);
+          }
         }
       }
     );
@@ -90,58 +87,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const createUserProfile = async (user: User) => {
-    try {
-      // Use upsert to handle potential duplicates gracefully
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || null,
-          // Remove manual timestamps - let database handle with defaults
-        }, {
-          onConflict: 'id'
-        });
-
-      if (error) {
-        console.error('Error creating/updating user profile:', error);
-      } else {
-        console.log('User profile created/updated successfully');
-      }
-    } catch (error) {
-      console.error('Error in createUserProfile:', error);
-    }
-  };
-
   const signInWithEmail = async (email: string, name?: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          data: {
-            full_name: name || null,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      return { error };
-    } catch (error) {
-      console.error('Error signing in:', error);
-      return { error };
-    }
+    await AuthService.signInWithEmail(email, name);
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-      }
-    } catch (error) {
-      console.error('Error in signOut:', error);
-    }
+    await AuthService.signOut();
   };
 
   const value = {
