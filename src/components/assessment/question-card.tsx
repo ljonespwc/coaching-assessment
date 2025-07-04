@@ -322,6 +322,16 @@ export default function QuestionCard({
                 borderColor: currentAnswer === option.value ? domainColor : undefined,
                 cursor: isComplete ? 'not-allowed' : 'pointer'
               }}
+              onMouseEnter={(e) => {
+                if (!isComplete && currentAnswer !== option.value) {
+                  e.currentTarget.style.backgroundColor = `${domainColor}15`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isComplete && currentAnswer !== option.value) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
               whileHover={{ scale: isComplete ? 1 : 1.02 }}
               whileTap={{ scale: isComplete ? 1 : 0.98 }}
             >
