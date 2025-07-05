@@ -21,7 +21,7 @@ interface ResultsPageState {
 }
 
 export default function ResultsPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [state, setState] = useState<ResultsPageState>({
     loading: true,
     error: null,
@@ -40,8 +40,11 @@ export default function ResultsPage() {
       }
 
       try {
-        const assessmentData = await fetchLatestAssessmentResults(user.id);
+        console.log('Loading results for user:', user.id);
+        const assessmentData = await fetchLatestAssessmentResults(user.id, session?.access_token);
+        console.log('Assessment data received:', assessmentData);
         const results = assessmentData?.scoreResults || null;
+        console.log('Score results:', results);
         
         // If no results found and this is the first attempt, wait and retry
         // This handles the case where assessment completion is still processing
@@ -91,7 +94,7 @@ export default function ResultsPage() {
     };
 
     loadResults();
-  }, [user]);
+  }, [user, session]);
 
   const handleDomainClick = (domainId: number) => {
     if (!state.results || !state.recommendations) return;

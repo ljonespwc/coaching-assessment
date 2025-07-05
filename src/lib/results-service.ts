@@ -129,6 +129,9 @@ export async function fetchLatestAssessmentResults(
   accessToken?: string
 ): Promise<AssessmentResultsData | null> {
   try {
+    console.log('Fetching latest assessment for user:', userId);
+    console.log('Access token provided:', !!accessToken);
+    
     // Find the latest completed assessment for the user
     const assessmentData = await httpRequest(
       `/assessments?user_id=eq.${userId}&status=eq.completed&select=*&order=completed_at.desc&limit=1`,
@@ -136,12 +139,18 @@ export async function fetchLatestAssessmentResults(
       accessToken
     ) as unknown[];
 
+    console.log('Assessment query result:', assessmentData);
+
     if (!assessmentData || assessmentData.length === 0) {
+      console.log('No completed assessments found');
       return null;
     }
 
     const assessment = assessmentData[0] as Assessment;
-    return await fetchAssessmentResults(assessment.id, accessToken);
+    console.log('Found assessment:', assessment.id);
+    const result = await fetchAssessmentResults(assessment.id, accessToken);
+    console.log('Assessment results loaded successfully');
+    return result;
 
   } catch (error) {
     console.error('Failed to fetch latest assessment results:', error);
