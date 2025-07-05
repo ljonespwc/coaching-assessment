@@ -253,16 +253,20 @@ export default function AssessmentFlow() {
         setIsAdvancing(false);
       }, 800);
     } else {
-      // Final question - show trophy celebration immediately
-      setTimeout(() => {
+      // Final question - complete assessment then show trophy celebration
+      setTimeout(async () => {
         setShowSaved(false);
         setIsAdvancing(false);
+        
+        // Complete the assessment before showing celebration
+        await completeAssessment();
+        
         setShowCompletionCelebration(true);
       }, 800);
     }
   };
 
-  const handleComplete = async () => {
+  const completeAssessment = async () => {
     try {
       if (state.assessment) {
         // Calculate final scores
@@ -280,12 +284,20 @@ export default function AssessmentFlow() {
             score_category: scoreResults.category
           })
         }, session?.access_token);
+        
+        console.log('Assessment completed successfully:', {
+          totalScore: scoreResults.totalScore,
+          percentage: scoreResults.percentage,
+          category: scoreResults.category
+        });
       }
     } catch (error) {
       console.error('Failed to complete assessment:', error);
     }
-    
-    // Navigate to results page
+  };
+
+  const handleComplete = () => {
+    // Assessment is already completed, just navigate to results
     window.location.href = '/results';
   };
 

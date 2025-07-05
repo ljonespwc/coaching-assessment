@@ -33,7 +33,7 @@ export default function ResultsPage() {
   });
 
   useEffect(() => {
-    const loadResults = async () => {
+    const loadResults = async (retryCount = 0) => {
       if (!user) {
         setState(prev => ({ ...prev, loading: false, error: 'Please log in to view results' }));
         return;
@@ -42,7 +42,30 @@ export default function ResultsPage() {
       try {
         const assessmentData = await fetchLatestAssessmentResults(user.id);
         const results = assessmentData?.scoreResults || null;
-        const recommendations = results ? generateRecommendations(results.domainScores) : null;
+        
+        // If no results found and this is the first attempt, wait and retry
+        // This handles the case where assessment completion is still processing
+        if (!results && retryCount === 0) {
+          console.log('No results found, retrying in 2 seconds...');
+          setTimeout(() => loadResults(1), 2000);
+          return;
+        }
+        
+        // If still no results after retry, show appropriate message
+        if (!results) {
+          setState({ 
+            loading: false, 
+            error: 'No completed assessments found. Please complete an assessment first.', 
+            results: null,
+            recommendations: null,
+            selectedDomain: null,
+            selectedRecommendation: null,
+            isModalOpen: false
+          });
+          return;
+        }
+        
+        const recommendations = generateRecommendations(results.domainScores);
         
         setState({ 
           loading: false, 
