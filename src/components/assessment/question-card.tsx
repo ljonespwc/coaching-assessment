@@ -2,30 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Question {
-  id: number;
-  question_text: string;
-  question_order: number;
-  domain_id: number;
-  domains: {
-    id: number;
-    name: string;
-    description: string;
-    color_hex: string;
-    icon_emoji: string;
-    display_order: number;
-  } | null;
-}
-
-interface Domain {
-  id: number;
-  name: string;
-  description: string;
-  color_hex: string;
-  icon_emoji: string;
-  display_order: number;
-}
+import { Question, Domain } from '@/types/assessment';
 
 interface QuestionCardProps {
   question: Question;

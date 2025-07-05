@@ -1,4 +1,56 @@
-// Assessment domain types
+// Database-matching types
+export interface Domain {
+  id: number;
+  name: string;
+  description: string;
+  color_hex: string;
+  icon_emoji: string;
+  display_order: number;
+  slug?: string;
+  max_score?: number;
+  created_at?: string;
+}
+
+export interface Question {
+  id: number;
+  domain_id: number;
+  question_text: string;
+  question_order: number;
+  is_active?: boolean;
+  version?: number;
+  created_at?: string;
+  updated_at?: string;
+  domains?: Domain | null | undefined;
+}
+
+export interface Assessment {
+  id: string;
+  user_id: string;
+  assessment_type: string;
+  status: 'in_progress' | 'completed';
+  target_domain_id?: number;
+  total_score?: number;
+  percentage_score?: number;
+  score_category?: string;
+  started_at: string;
+  completed_at?: string;
+  context?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  current_question_index?: number;
+}
+
+export interface AssessmentResponse {
+  id: string;
+  assessment_id: string;
+  question_id: number;
+  domain_id: number;
+  response_value: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy assessment domain types (keeping for backward compatibility)
 export type AssessmentDomain = 
   | 'personal_development'
   | 'professional_development'
@@ -15,8 +67,8 @@ export interface AssessmentQuestion {
   order: number;
 }
 
-// Assessment response types
-export interface AssessmentResponse {
+// Legacy assessment response types (keeping for backward compatibility)
+export interface LegacyAssessmentResponse {
   questionId: string;
   score: number; // 1-5 scale
 }
@@ -36,7 +88,7 @@ export interface AssessmentResult {
   maxTotalScore: number;
   overallPercentage: number;
   domainScores: DomainScore[];
-  responses: AssessmentResponse[];
+  responses: LegacyAssessmentResponse[];
   completedAt: string;
 }
 
@@ -44,6 +96,6 @@ export interface AssessmentResult {
 export interface AssessmentProgress {
   currentQuestionIndex: number;
   totalQuestions: number;
-  responses: AssessmentResponse[];
+  responses: LegacyAssessmentResponse[];
   isComplete: boolean;
 }

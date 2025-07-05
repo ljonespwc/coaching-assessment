@@ -1,40 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
 import CompletionCelebration from './completion-celebration';
 
-type Question = {
-  id: number;
-  question_text: string;
-  domain_id: number;
-  question_order: number;
-  domains: Domain | null;
-};
-
-type Domain = {
-  id: number;
-  name: string;
-  description: string;
-  color_hex: string;
-  icon_emoji: string;
-  display_order: number;
-};
-
-type Assessment = {
-  id: string;
-  user_id: string;
-  status: 'in_progress' | 'completed';
-  current_question_index: number;
-};
-
-type AssessmentResponse = {
-  question_id: number;
-  response_value: number;
-  domain_id: number;
-};
+import { Domain, Assessment, AssessmentResponse, Question } from '@/types/assessment';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -292,11 +265,19 @@ export default function AssessmentFlow() {
   const handleComplete = async () => {
     try {
       if (state.assessment) {
+        // Calculate final scores
+        const { calculateScoreResults } = await import('@/lib/score-calculator');
+        const scoreResults = calculateScoreResults(state.responses, state.questions, domains);
+        
+        // Update assessment with completion status and scores
         await httpRequest(`/assessments?id=eq.${state.assessment.id}`, {
           method: 'PATCH',
           body: JSON.stringify({
             status: 'completed',
-            completed_at: new Date().toISOString()
+            completed_at: new Date().toISOString(),
+            total_score: scoreResults.totalScore,
+            percentage_score: scoreResults.percentage,
+            score_category: scoreResults.category
           })
         }, session?.access_token);
       }
