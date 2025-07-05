@@ -54,6 +54,23 @@ export function AssessmentLanding() {
                 Precision Nutrition
               </h1>
             </div>
+            
+            {user && (
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => router.push('/results')}
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Results
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
