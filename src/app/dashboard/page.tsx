@@ -12,7 +12,7 @@ interface DashboardState {
 }
 
 export default function DashboardPage() {
-  const { user, session } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [state, setState] = useState<DashboardState>({
     loading: true,
     error: null,
@@ -21,8 +21,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadDashboard = async () => {
+      // Wait for auth to finish loading before checking user
+      if (authLoading) {
+        return;
+      }
+      
       if (!user) {
-        setState({ loading: false, error: 'Please log in to view your dashboard', data: null });
+        setState({ 
+          loading: false, 
+          error: 'Please log in to view dashboard', 
+          data: null 
+        });
         return;
       }
 
@@ -40,7 +49,7 @@ export default function DashboardPage() {
     };
 
     loadDashboard();
-  }, [user, session]);
+  }, [user, session, authLoading]);
 
   const handleStartAssessment = () => {
     window.location.href = '/assessment';

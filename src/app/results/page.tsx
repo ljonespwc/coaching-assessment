@@ -21,7 +21,7 @@ interface ResultsPageState {
 }
 
 export default function ResultsPage() {
-  const { user, session } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [state, setState] = useState<ResultsPageState>({
     loading: true,
     error: null,
@@ -34,6 +34,11 @@ export default function ResultsPage() {
 
   useEffect(() => {
     const loadResults = async (retryCount = 0) => {
+      // Wait for auth to finish loading before checking user
+      if (authLoading) {
+        return;
+      }
+      
       if (!user) {
         setState(prev => ({ ...prev, loading: false, error: 'Please log in to view results' }));
         return;
@@ -94,7 +99,7 @@ export default function ResultsPage() {
     };
 
     loadResults();
-  }, [user, session]);
+  }, [user, session, authLoading]);
 
   const handleDomainClick = (domainId: number) => {
     if (!state.results || !state.recommendations) return;
@@ -125,8 +130,11 @@ export default function ResultsPage() {
     window.location.href = '/assessment';
   };
 
+  const handleStartAssessment = () => {
+    window.location.href = '/assessment';
+  };
+
   const handleViewReport = () => {
-    // TODO: Implement detailed report view
     console.log('View detailed report');
   };
 
@@ -204,9 +212,44 @@ export default function ResultsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-6">
-        <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-900">
+                Precision Nutrition
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Home
+              </button>
+              <button
+                onClick={() => window.location.href = '/dashboard'}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={handleStartAssessment}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                New Assessment
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="py-8">
+        <div className="container mx-auto px-6">
+          <div className="max-w-6xl mx-auto space-y-8">
           
           {/* Hero Section */}
           <motion.div 
@@ -408,6 +451,7 @@ export default function ResultsPage() {
               Retake Assessment
             </button>
           </motion.div>
+          </div>
         </div>
       </div>
 
