@@ -222,12 +222,14 @@ export async function fetchAssessmentHistory(userId: string, accessToken?: strin
 
 /**
  * Delete an assessment and all related data
- * This will clean up:
- * - assessment_responses (CASCADE delete - automatic)
- * - user_progress records that reference this assessment
- * - course_recommendations for this assessment
- * - user_achievements related to this assessment
- * - the assessment record itself
+ * Database CASCADE constraints automatically handle:
+ * - assessment_responses (CASCADE DELETE)
+ * - user_achievements (CASCADE DELETE)
+ * - user_progress foreign key references (SET NULL)
+ * - course_recommendations (CASCADE DELETE - if constraint exists)
+ * 
+ * Special handling: If this is the user's only completed assessment,
+ * we also delete all user_progress records.
  */
 export async function deleteAssessment(assessmentId: string, userId: string, accessToken?: string): Promise<void> {
   try {
@@ -244,27 +246,7 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
       throw new Error('Assessment not found or access denied');
     }
     
-    // Delete related data in the correct order
-    // Note: assessment_responses will be deleted automatically due to CASCADE
-    
-    // 1. Delete course recommendations for this assessment
-    await httpRequest(
-      `/course_recommendations?assessment_id=eq.${assessmentId}`,
-      { method: 'DELETE' },
-      accessToken
-    );
-    console.log('Deleted course recommendations for assessment:', assessmentId);
-    
-    // 2. Delete user achievements related to this assessment
-    await httpRequest(
-      `/user_achievements?related_assessment_id=eq.${assessmentId}`,
-      { method: 'DELETE' },
-      accessToken
-    );
-    console.log('Deleted user achievements for assessment:', assessmentId);
-    
-    // 3. Update user_progress records that reference this assessment
-    // First, check if this is the user's only assessment
+    // Check if this is the user's only completed assessment
     const remainingAssessments = await httpRequest(
       `/assessments?user_id=eq.${userId}&status=eq.completed&id=neq.${assessmentId}&select=id`,
       {},
@@ -273,30 +255,13 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
     
     const hasOtherCompletedAssessments = remainingAssessments.length > 0;
     
-    if (hasOtherCompletedAssessments) {
-      // If user has other completed assessments, just null the references
-      try {
-        await httpRequest(
-          `/user_progress?latest_assessment_id=eq.${assessmentId}`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify({ latest_assessment_id: null })
-          },
-          accessToken
-        );
-        console.log('Updated latest_assessment_id references for assessment:', assessmentId);
-      } catch (error) {
-        console.error('Failed to update latest_assessment_id references:', error);
-        throw new Error('Failed to update user progress (latest assessment references)');
-      }
-    } else {
-      // If this is the user's only completed assessment, delete all progress records
+    // If this is the user's only completed assessment, delete all progress records
+    // Otherwise, database constraints will handle the foreign key updates automatically
+    if (!hasOtherCompletedAssessments) {
       try {
         await httpRequest(
           `/user_progress?user_id=eq.${userId}`,
-          {
-            method: 'DELETE'
-          },
+          { method: 'DELETE' },
           accessToken
         );
         console.log('Deleted all user progress data (was only completed assessment):', assessmentId);
@@ -306,24 +271,12 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
       }
     }
     
-    // Set previous_assessment_id to NULL where it matches this assessment
-    try {
-      await httpRequest(
-        `/user_progress?previous_assessment_id=eq.${assessmentId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ previous_assessment_id: null })
-        },
-        accessToken
-      );
-      console.log('Updated previous_assessment_id references for assessment:', assessmentId);
-    } catch (error) {
-      console.error('Failed to update previous_assessment_id references:', error);
-      throw new Error('Failed to update user progress (previous assessment references)');
-    }
-    
-    // 4. Finally, delete the assessment itself
-    // This will also trigger CASCADE delete of assessment_responses
+    // Delete the assessment itself
+    // Database CASCADE constraints will now automatically handle:
+    // - assessment_responses (CASCADE DELETE)
+    // - user_achievements (CASCADE DELETE)
+    // - user_progress latest_assessment_id/previous_assessment_id (SET NULL)
+    // - course_recommendations (CASCADE DELETE - if constraint exists)
     await httpRequest(
       `/assessments?id=eq.${assessmentId}`,
       { method: 'DELETE' },
