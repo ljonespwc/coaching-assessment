@@ -51,18 +51,6 @@ export interface DashboardProgress {
   last_assessment_date: string;
 }
 
-export interface DashboardRecommendation {
-  id: string;
-  course_id: number;
-  course_name: string;
-  course_type: string;
-  course_description: string;
-  recommendation_type: string;
-  priority_score: number;
-  reason: string;
-  target_domains: number[];
-  created_at: string;
-}
 
 export interface DashboardAchievement {
   id: string;
@@ -76,7 +64,6 @@ export interface DashboardAchievement {
 export interface DashboardData {
   assessments: DashboardAssessment[];
   progress: DashboardProgress[];
-  recommendations: DashboardRecommendation[];
   achievements: DashboardAchievement[];
   totalAssessments: number;
   completedAssessments: number;
@@ -135,38 +122,6 @@ export async function fetchDashboardData(userId: string, accessToken?: string): 
       last_assessment_date: p.last_assessment_date
     }));
 
-    // Fetch course recommendations with course details
-    const recommendationsData = await httpRequest(
-      `/course_recommendations?user_id=eq.${userId}&select=*,courses(name,type,description)&order=priority_score.desc`,
-      {},
-      accessToken
-    ) as Array<{
-      id: string;
-      course_id: number;
-      recommendation_type: string;
-      priority_score: number;
-      reason: string;
-      target_domains: number[];
-      created_at: string;
-      courses: {
-        name: string;
-        type: string;
-        description: string;
-      } | null;
-    }>;
-
-    const recommendations: DashboardRecommendation[] = recommendationsData.map(r => ({
-      id: r.id,
-      course_id: r.course_id,
-      course_name: r.courses?.name || 'Unknown Course',
-      course_type: r.courses?.type || 'course',
-      course_description: r.courses?.description || '',
-      recommendation_type: r.recommendation_type,
-      priority_score: r.priority_score,
-      reason: r.reason,
-      target_domains: r.target_domains || [],
-      created_at: r.created_at
-    }));
 
     // Fetch achievements
     const achievementsData = await httpRequest(
@@ -188,7 +143,6 @@ export async function fetchDashboardData(userId: string, accessToken?: string): 
     return {
       assessments: assessmentsData,
       progress,
-      recommendations,
       achievements: achievementsData,
       totalAssessments,
       completedAssessments: completedAssessments.length,
@@ -226,7 +180,6 @@ export async function fetchAssessmentHistory(userId: string, accessToken?: strin
  * - assessment_responses (CASCADE DELETE)
  * - user_achievements (CASCADE DELETE)
  * - user_progress foreign key references (SET NULL)
- * - course_recommendations (CASCADE DELETE - if constraint exists)
  * 
  * Special handling: If this is the user's only completed assessment,
  * we also delete all user_progress records.
@@ -276,7 +229,6 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
     // - assessment_responses (CASCADE DELETE)
     // - user_achievements (CASCADE DELETE)
     // - user_progress latest_assessment_id/previous_assessment_id (SET NULL)
-    // - course_recommendations (CASCADE DELETE - if constraint exists)
     await httpRequest(
       `/assessments?id=eq.${assessmentId}`,
       { method: 'DELETE' },
