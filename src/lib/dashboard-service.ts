@@ -264,20 +264,46 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
     console.log('Deleted user achievements for assessment:', assessmentId);
     
     // 3. Update user_progress records that reference this assessment
-    // Set latest_assessment_id to NULL where it matches this assessment
-    try {
-      await httpRequest(
-        `/user_progress?latest_assessment_id=eq.${assessmentId}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ latest_assessment_id: null })
-        },
-        accessToken
-      );
-      console.log('Updated latest_assessment_id references for assessment:', assessmentId);
-    } catch (error) {
-      console.error('Failed to update latest_assessment_id references:', error);
-      throw new Error('Failed to update user progress (latest assessment references)');
+    // First, check if this is the user's only assessment
+    const remainingAssessments = await httpRequest(
+      `/assessments?user_id=eq.${userId}&status=eq.completed&id=neq.${assessmentId}&select=id`,
+      {},
+      accessToken
+    ) as unknown[];
+    
+    const hasOtherCompletedAssessments = remainingAssessments.length > 0;
+    
+    if (hasOtherCompletedAssessments) {
+      // If user has other completed assessments, just null the references
+      try {
+        await httpRequest(
+          `/user_progress?latest_assessment_id=eq.${assessmentId}`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ latest_assessment_id: null })
+          },
+          accessToken
+        );
+        console.log('Updated latest_assessment_id references for assessment:', assessmentId);
+      } catch (error) {
+        console.error('Failed to update latest_assessment_id references:', error);
+        throw new Error('Failed to update user progress (latest assessment references)');
+      }
+    } else {
+      // If this is the user's only completed assessment, delete all progress records
+      try {
+        await httpRequest(
+          `/user_progress?user_id=eq.${userId}`,
+          {
+            method: 'DELETE'
+          },
+          accessToken
+        );
+        console.log('Deleted all user progress data (was only completed assessment):', assessmentId);
+      } catch (error) {
+        console.error('Failed to delete user progress data:', error);
+        throw new Error('Failed to delete user progress data');
+      }
     }
     
     // Set previous_assessment_id to NULL where it matches this assessment
