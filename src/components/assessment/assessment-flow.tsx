@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
@@ -74,8 +74,19 @@ export default function AssessmentFlow() {
   const [celebratingDomains, setCelebratingDomains] = useState<Set<number>>(new Set());
   const [alreadyCelebratedDomains, setAlreadyCelebratedDomains] = useState<Set<number>>(new Set());
   const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
+  
+  // Prevent multiple simultaneous initialization calls
+  const initializingRef = useRef(false);
 
   const initialize = useCallback(async () => {
+    // Prevent multiple simultaneous calls
+    if (initializingRef.current) {
+      console.log('Initialize already in progress, skipping...');
+      return;
+    }
+    
+    initializingRef.current = true;
+    
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
@@ -129,15 +140,27 @@ export default function AssessmentFlow() {
           // Create new assessment if none found
           if (!assessment) {
             console.log('Creating new assessment');
-            assessment = await httpRequest('/assessments', {
-              method: 'POST',
-              body: JSON.stringify({
-                user_id: user.id,
-                assessment_type: 'full',
-                status: 'in_progress',
-                current_question_index: 0
-              })
-            }, accessToken) as Assessment;
+            try {
+              assessment = await httpRequest('/assessments', {
+                method: 'POST',
+                body: JSON.stringify({
+                  user_id: user.id,
+                  assessment_type: 'full',
+                  status: 'in_progress',
+                  current_question_index: 0
+                })
+              }, accessToken) as Assessment;
+            } catch (createError) {
+              // If creation fails (possibly due to race condition), try to find an assessment that was just created
+              console.log('Assessment creation failed, checking for recently created assessment:', createError);
+              const recentlyCreated = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress&select=*&order=created_at.desc&limit=1`, {}, accessToken) as unknown[];
+              if (recentlyCreated.length > 0) {
+                assessment = recentlyCreated[0] as Assessment;
+                console.log('Found recently created assessment:', assessment.id);
+              } else {
+                throw createError; // Re-throw if we still can't find an assessment
+              }
+            }
           }
         } catch (error) {
           console.error('Assessment creation failed:', error);
@@ -173,6 +196,9 @@ export default function AssessmentFlow() {
         loading: false,
         error: error instanceof Error ? error.message : 'Failed to load assessment',
       }));
+    } finally {
+      // Reset the flag regardless of success or failure
+      initializingRef.current = false;
     }
   }, [user?.id, session?.access_token, resumeAssessmentId]);
 
