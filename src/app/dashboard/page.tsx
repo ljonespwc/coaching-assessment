@@ -32,6 +32,8 @@ export default function DashboardPage() {
     assessmentTitle: null,
     isDeleting: false
   });
+  
+  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -66,6 +68,9 @@ export default function DashboardPage() {
   }, [user, session, authLoading]);
 
   const handleStartAssessment = () => {
+    if (isStartingAssessment) return; // Prevent double-clicks
+    
+    setIsStartingAssessment(true);
     window.location.href = '/assessment';
   };
 
@@ -213,9 +218,14 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleStartAssessment}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                disabled={isStartingAssessment}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isStartingAssessment 
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                New Assessment
+                {isStartingAssessment ? 'Starting...' : 'New Assessment'}
               </button>
             </div>
           </div>
@@ -322,9 +332,14 @@ export default function DashboardPage() {
                   <h2 className="text-lg font-medium text-gray-900">Assessment History</h2>
                   <button
                     onClick={handleStartAssessment}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                    disabled={isStartingAssessment}
+                    className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                      isStartingAssessment 
+                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                   >
-                    New Assessment
+                    {isStartingAssessment ? 'Starting...' : 'New Assessment'}
                   </button>
                 </div>
               </div>
@@ -340,9 +355,14 @@ export default function DashboardPage() {
                     <p className="text-gray-500 mb-4">No assessments yet</p>
                     <button
                       onClick={handleStartAssessment}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      disabled={isStartingAssessment}
+                      className={`px-6 py-3 rounded-md transition-colors ${
+                        isStartingAssessment 
+                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     >
-                      Take Your First Assessment
+                      {isStartingAssessment ? 'Starting...' : 'Take Your First Assessment'}
                     </button>
                   </div>
                 ) : (

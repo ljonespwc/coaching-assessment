@@ -312,9 +312,38 @@ export default function AssessmentFlow() {
           })
         }, session?.access_token);
         
+        // Update user progress using database function for accurate scoring
+        await httpRequest(`/rpc/update_user_progress`, {
+          method: 'POST',
+          body: JSON.stringify({
+            user_uuid: state.assessment.user_id,
+            assessment_uuid: state.assessment.id
+          })
+        }, session?.access_token);
+        
+        // Get the correct total score from user_progress after RPC call
+        const progressData = await httpRequest(
+          `/user_progress?user_id=eq.${state.assessment.user_id}&select=latest_score`,
+          {},
+          session?.access_token
+        ) as Array<{ latest_score: number }>;
+        
+        const correctTotalScore = progressData.reduce((sum, domain) => sum + domain.latest_score, 0);
+        const correctPercentage = (correctTotalScore / 275) * 100;
+        
+        // Update assessment with correct scores from database calculation
+        await httpRequest(`/assessments?id=eq.${state.assessment.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            total_score: correctTotalScore,
+            percentage_score: Math.round(correctPercentage * 10) / 10
+          })
+        }, session?.access_token);
+        
         console.log('Assessment completed successfully:', {
-          totalScore: scoreResults.totalScore,
-          percentage: scoreResults.percentage,
+          frontendCalculation: scoreResults.totalScore,
+          databaseCalculation: correctTotalScore,
+          correctedPercentage: correctPercentage,
           category: scoreResults.category
         });
       }
