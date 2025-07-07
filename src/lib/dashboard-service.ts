@@ -219,3 +219,94 @@ export async function fetchAssessmentHistory(userId: string, accessToken?: strin
     throw new Error('Failed to load assessment history');
   }
 }
+
+/**
+ * Delete an assessment and all related data
+ * This will clean up:
+ * - assessment_responses (CASCADE delete - automatic)
+ * - user_progress records that reference this assessment
+ * - course_recommendations for this assessment
+ * - user_achievements related to this assessment
+ * - the assessment record itself
+ */
+export async function deleteAssessment(assessmentId: string, userId: string, accessToken?: string): Promise<void> {
+  try {
+    console.log('Deleting assessment:', assessmentId, 'for user:', userId);
+    
+    // First verify the assessment belongs to the user
+    const assessmentData = await httpRequest(
+      `/assessments?id=eq.${assessmentId}&user_id=eq.${userId}&select=id`,
+      {},
+      accessToken
+    ) as unknown[];
+    
+    if (!assessmentData || assessmentData.length === 0) {
+      throw new Error('Assessment not found or access denied');
+    }
+    
+    // Delete related data in the correct order
+    // Note: assessment_responses will be deleted automatically due to CASCADE
+    
+    // 1. Delete course recommendations for this assessment
+    await httpRequest(
+      `/course_recommendations?assessment_id=eq.${assessmentId}`,
+      { method: 'DELETE' },
+      accessToken
+    );
+    console.log('Deleted course recommendations for assessment:', assessmentId);
+    
+    // 2. Delete user achievements related to this assessment
+    await httpRequest(
+      `/user_achievements?related_assessment_id=eq.${assessmentId}`,
+      { method: 'DELETE' },
+      accessToken
+    );
+    console.log('Deleted user achievements for assessment:', assessmentId);
+    
+    // 3. Update user_progress records that reference this assessment
+    // Set latest_assessment_id to NULL where it matches this assessment
+    try {
+      await httpRequest(
+        `/user_progress?latest_assessment_id=eq.${assessmentId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ latest_assessment_id: null })
+        },
+        accessToken
+      );
+      console.log('Updated latest_assessment_id references for assessment:', assessmentId);
+    } catch (error) {
+      console.error('Failed to update latest_assessment_id references:', error);
+      throw new Error('Failed to update user progress (latest assessment references)');
+    }
+    
+    // Set previous_assessment_id to NULL where it matches this assessment
+    try {
+      await httpRequest(
+        `/user_progress?previous_assessment_id=eq.${assessmentId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ previous_assessment_id: null })
+        },
+        accessToken
+      );
+      console.log('Updated previous_assessment_id references for assessment:', assessmentId);
+    } catch (error) {
+      console.error('Failed to update previous_assessment_id references:', error);
+      throw new Error('Failed to update user progress (previous assessment references)');
+    }
+    
+    // 4. Finally, delete the assessment itself
+    // This will also trigger CASCADE delete of assessment_responses
+    await httpRequest(
+      `/assessments?id=eq.${assessmentId}`,
+      { method: 'DELETE' },
+      accessToken
+    );
+    console.log('Deleted assessment:', assessmentId);
+    
+  } catch (error) {
+    console.error('Failed to delete assessment:', error);
+    throw new Error('Failed to delete assessment. Please try again.');
+  }
+}

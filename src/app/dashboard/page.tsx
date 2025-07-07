@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { fetchDashboardData, DashboardData } from '@/lib/dashboard-service';
+import { fetchDashboardData, DashboardData, deleteAssessment } from '@/lib/dashboard-service';
 import { motion } from 'framer-motion';
 
 interface DashboardState {
@@ -11,12 +11,26 @@ interface DashboardState {
   data: DashboardData | null;
 }
 
+interface DeleteConfirmationState {
+  isOpen: boolean;
+  assessmentId: string | null;
+  assessmentTitle: string | null;
+  isDeleting: boolean;
+}
+
 export default function DashboardPage() {
   const { user, session, loading: authLoading } = useAuth();
   const [state, setState] = useState<DashboardState>({
     loading: true,
     error: null,
     data: null
+  });
+  
+  const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmationState>({
+    isOpen: false,
+    assessmentId: null,
+    assessmentTitle: null,
+    isDeleting: false
   });
 
   useEffect(() => {
@@ -57,6 +71,52 @@ export default function DashboardPage() {
 
   const handleViewResults = (assessmentId: string) => {
     window.location.href = `/results?assessment=${assessmentId}`;
+  };
+  
+  const handleDeleteClick = (assessmentId: string, assessmentTitle: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      assessmentId,
+      assessmentTitle,
+      isDeleting: false
+    });
+  };
+  
+  const handleDeleteCancel = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      assessmentId: null,
+      assessmentTitle: null,
+      isDeleting: false
+    });
+  };
+  
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmation.assessmentId || !user) return;
+    
+    setDeleteConfirmation(prev => ({ ...prev, isDeleting: true }));
+    
+    try {
+      await deleteAssessment(deleteConfirmation.assessmentId, user.id, session?.access_token);
+      
+      // Refresh dashboard data
+      const dashboardData = await fetchDashboardData(user.id, session?.access_token);
+      setState({ loading: false, error: null, data: dashboardData });
+      
+      // Close confirmation dialog
+      setDeleteConfirmation({
+        isOpen: false,
+        assessmentId: null,
+        assessmentTitle: null,
+        isDeleting: false
+      });
+      
+    } catch (error) {
+      console.error('Failed to delete assessment:', error);
+      setDeleteConfirmation(prev => ({ ...prev, isDeleting: false }));
+      // Could add a toast notification here
+      alert('Failed to delete assessment. Please try again.');
+    }
   };
 
   if (state.loading) {
@@ -311,7 +371,24 @@ export default function DashboardPage() {
                               </p>
                             </div>
                           </div>
-                          {getStatusBadge(assessment.status)}
+                          <div className="flex items-center space-x-2">
+                            {getStatusBadge(assessment.status)}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(
+                                  assessment.id, 
+                                  `${assessment.assessment_type === 'full' ? 'Full Assessment' : 'Domain Assessment'} from ${formatDate(assessment.started_at)}`
+                                );
+                              }}
+                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              title="Delete assessment"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                         
                         {assessment.status === 'completed' && (
@@ -435,6 +512,59 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Assessment</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to delete <strong>{deleteConfirmation.assessmentTitle}</strong>? 
+              This will permanently remove all assessment data, responses, recommendations, and related achievements.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteConfirmation.isDeleting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteConfirmation.isDeleting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
+              >
+                {deleteConfirmation.isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Assessment'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
