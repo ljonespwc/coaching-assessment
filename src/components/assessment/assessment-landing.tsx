@@ -10,10 +10,14 @@ export function AssessmentLanding() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [showEmailGate, setShowEmailGate] = useState(false);
+  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
 
   const handleStartAssessment = () => {
+    if (isStartingAssessment) return; // Prevent double-clicks
+    
     if (user) {
       // User is already authenticated, go directly to assessment
+      setIsStartingAssessment(true);
       router.push('/assessment');
     } else {
       // Show email collection
@@ -92,8 +96,9 @@ export function AssessmentLanding() {
               size="lg" 
               className="px-8 py-4 text-lg font-semibold"
               onClick={handleStartAssessment}
+              disabled={isStartingAssessment}
             >
-              START ASSESSMENT
+              {isStartingAssessment ? 'STARTING...' : 'START ASSESSMENT'}
             </Button>
             <p className="mt-4 text-sm text-gray-500">
               Takes about 15 minutes
@@ -158,8 +163,9 @@ export function AssessmentLanding() {
               variant="outline" 
               size="lg"
               onClick={handleStartAssessment}
+              disabled={isStartingAssessment}
             >
-              BEGIN ASSESSMENT
+              {isStartingAssessment ? 'STARTING...' : 'BEGIN ASSESSMENT'}
             </Button>
           </div>
         </div>

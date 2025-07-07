@@ -31,6 +31,8 @@ export default function ResultsPage() {
     selectedRecommendation: null,
     isModalOpen: false
   });
+  
+  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
 
   useEffect(() => {
     const loadResults = async (retryCount = 0) => {
@@ -127,10 +129,16 @@ export default function ResultsPage() {
   };
 
   const handleRetakeAssessment = () => {
+    if (isStartingAssessment) return; // Prevent double-clicks
+    
+    setIsStartingAssessment(true);
     window.location.href = '/assessment';
   };
 
   const handleStartAssessment = () => {
+    if (isStartingAssessment) return; // Prevent double-clicks
+    
+    setIsStartingAssessment(true);
     window.location.href = '/assessment';
   };
 
@@ -168,9 +176,14 @@ export default function ResultsPage() {
               <p className="text-gray-600 mb-6">{state.error}</p>
               <button 
                 onClick={handleRetakeAssessment}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isStartingAssessment}
+                className={`px-6 py-3 rounded-lg transition-colors ${
+                  isStartingAssessment 
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                Take Assessment
+                {isStartingAssessment ? 'Starting...' : 'Take Assessment'}
               </button>
             </div>
           </div>
@@ -189,9 +202,14 @@ export default function ResultsPage() {
               <p className="text-gray-600 mb-6">You haven&apos;t completed an assessment yet.</p>
               <button 
                 onClick={handleRetakeAssessment}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                disabled={isStartingAssessment}
+                className={`px-6 py-3 rounded-lg transition-colors ${
+                  isStartingAssessment 
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                Start Assessment
+                {isStartingAssessment ? 'Starting...' : 'Start Assessment'}
               </button>
             </div>
           </div>
@@ -238,9 +256,14 @@ export default function ResultsPage() {
               </button>
               <button
                 onClick={handleStartAssessment}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                disabled={isStartingAssessment}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isStartingAssessment 
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                New Assessment
+                {isStartingAssessment ? 'Starting...' : 'New Assessment'}
               </button>
             </div>
           </div>
@@ -446,9 +469,14 @@ export default function ResultsPage() {
             </button>
             <button 
               onClick={handleRetakeAssessment}
-              className="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              disabled={isStartingAssessment}
+              className={`px-8 py-3 rounded-lg transition-colors font-medium ${
+                isStartingAssessment 
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              }`}
             >
-              Retake Assessment
+              {isStartingAssessment ? 'Starting...' : 'Retake Assessment'}
             </button>
           </motion.div>
           </div>
