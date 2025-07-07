@@ -142,9 +142,6 @@ export default function ResultsPage() {
     window.location.href = '/assessment';
   };
 
-  const handleViewReport = () => {
-    console.log('View detailed report');
-  };
 
   if (state.loading) {
     return (
@@ -328,37 +325,13 @@ export default function ResultsPage() {
               Your Coaching Profile
             </h2>
             
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center">
               <HexChart
                 domainScores={results.domainScores}
                 size={400}
                 onDomainClick={handleDomainClick}
                 className="mx-auto"
               />
-            </div>
-            
-            {/* Interactive Legend */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {results.domainScores.map((domain) => (
-                <div 
-                  key={domain.domainId}
-                  className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  onClick={() => handleDomainClick(domain.domainId)}
-                >
-                  <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: domain.color }}
-                  ></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {domain.emoji} {domain.domainName}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {domain.percentage.toFixed(0)}%
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </motion.div>
 
@@ -461,23 +434,19 @@ export default function ResultsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.0 }}
           >
-            <button 
-              onClick={handleViewReport}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              View Detailed Report
-            </button>
-            <button 
-              onClick={handleRetakeAssessment}
-              disabled={isStartingAssessment}
-              className={`px-8 py-3 rounded-lg transition-colors font-medium ${
-                isStartingAssessment 
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
-            >
-              {isStartingAssessment ? 'Starting...' : 'Retake Assessment'}
-            </button>
+            <div className="flex justify-center">
+              <button 
+                onClick={handleRetakeAssessment}
+                disabled={isStartingAssessment}
+                className={`px-8 py-3 rounded-lg transition-colors font-medium ${
+                  isStartingAssessment 
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isStartingAssessment ? 'Starting...' : 'Start New Assessment'}
+              </button>
+            </div>
           </motion.div>
           </div>
         </div>

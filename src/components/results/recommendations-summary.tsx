@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RecommendationsResult, DomainRecommendation } from '@/lib/recommendations-engine';
+import { RecommendationsResult } from '@/lib/recommendations-engine';
 import RecommendationPlaceholder from '@/components/placeholders/RecommendationPlaceholder';
 
 interface RecommendationsSummaryProps {
@@ -14,23 +14,6 @@ export default function RecommendationsSummary({
   recommendations, 
   onDomainClick 
 }: RecommendationsSummaryProps) {
-  const getPriorityIcon = (priority: DomainRecommendation['priority']) => {
-    switch (priority) {
-      case 'easiest_win': return '🎯';
-      case 'biggest_opportunity': return '🚀';
-      case 'maintain_strength': return '💪';
-      case 'continue_growth': return '📈';
-    }
-  };
-
-  const getPriorityColor = (priority: DomainRecommendation['priority']) => {
-    switch (priority) {
-      case 'easiest_win': return 'border-green-200 bg-green-50';
-      case 'biggest_opportunity': return 'border-orange-200 bg-orange-50';
-      case 'maintain_strength': return 'border-blue-200 bg-blue-50';
-      case 'continue_growth': return 'border-purple-200 bg-purple-50';
-    }
-  };
 
   return (
     <motion.div 
@@ -127,55 +110,6 @@ export default function RecommendationsSummary({
         </div>
       )}
 
-      {/* All Domain Recommendations */}
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-4">All Domain Recommendations</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recommendations.allRecommendations.map((rec, index) => (
-            <motion.div
-              key={rec.domainId}
-              className={`border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow ${getPriorityColor(rec.priority)}`}
-              onClick={() => onDomainClick(rec.domainId)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 * index }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg">{getPriorityIcon(rec.priority)}</span>
-                <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded-full">
-                  {rec.priorityLabel}
-                </span>
-              </div>
-              
-              <h4 className="font-medium text-gray-900 mb-2 text-sm">
-                {rec.domainName}
-              </h4>
-              
-              <div className="space-y-2">
-                <div className="text-xs text-gray-600">
-                  <strong>Practice Focus:</strong>
-                </div>
-                <div className="text-xs text-gray-700 leading-relaxed">
-                  {rec.practiceRecommendations[0]}
-                </div>
-              </div>
-              
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    {rec.courseRecommendations.length} courses available
-                  </span>
-                  <span className="text-xs font-medium text-blue-600">
-                    View Details →
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
 
       {/* Action Items */}
       {recommendations.isPlaceholder ? (
