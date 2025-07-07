@@ -329,9 +329,12 @@ export default function DashboardPage() {
                                 <span className="font-medium text-gray-900">{assessment.score_category}</span>
                               </div>
                             </div>
-                            <div className="text-sm text-blue-600 hover:text-blue-700">
+                            <button
+                              onClick={() => window.location.href = '/results'}
+                              className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                            >
                               View Results →
-                            </div>
+                            </button>
                           </div>
                         )}
                         
@@ -340,9 +343,12 @@ export default function DashboardPage() {
                             <div className="text-sm text-gray-500">
                               Progress: {assessment.current_question_index || 0}/55 questions
                             </div>
-                            <div className="text-sm text-blue-600 hover:text-blue-700">
+                            <button
+                              onClick={() => window.location.href = `/assessment?id=${assessment.id}`}
+                              className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                            >
                               Continue →
-                            </div>
+                            </button>
                           </div>
                         )}
                       </motion.div>

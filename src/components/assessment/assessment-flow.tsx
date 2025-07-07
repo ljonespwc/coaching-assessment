@@ -56,6 +56,10 @@ interface AssessmentState {
 export default function AssessmentFlow() {
   const { user, session } = useAuth();
   
+  // Get assessment ID from URL parameters if provided
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const resumeAssessmentId = urlParams?.get('id');
+  
   const [state, setState] = useState<AssessmentState>({
     assessment: null,
     questions: [],
@@ -97,11 +101,34 @@ export default function AssessmentFlow() {
       if (user?.id) {
         // Find or create assessment for the current user
         try {
-          const existingData = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress&select=*&order=updated_at.desc`, {}, accessToken) as unknown[];
-          
-          if (existingData.length > 0) {
-            assessment = existingData[0] as Assessment;
+          if (resumeAssessmentId) {
+            // Load specific assessment by ID
+            console.log('Resuming assessment:', resumeAssessmentId);
+            const specificAssessmentData = await httpRequest(`/assessments?id=eq.${resumeAssessmentId}&user_id=eq.${user.id}&status=eq.in_progress&select=*`, {}, accessToken) as unknown[];
+            
+            if (specificAssessmentData.length > 0) {
+              assessment = specificAssessmentData[0] as Assessment;
+              console.log('Found specific assessment to resume:', assessment.id);
+            } else {
+              console.log('Specific assessment not found or not in progress, falling back to latest');
+              // Fall back to latest in-progress assessment
+              const existingData = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress&select=*&order=updated_at.desc`, {}, accessToken) as unknown[];
+              if (existingData.length > 0) {
+                assessment = existingData[0] as Assessment;
+              }
+            }
           } else {
+            // Look for any in-progress assessment
+            const existingData = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.in_progress&select=*&order=updated_at.desc`, {}, accessToken) as unknown[];
+            
+            if (existingData.length > 0) {
+              assessment = existingData[0] as Assessment;
+            }
+          }
+          
+          // Create new assessment if none found
+          if (!assessment) {
+            console.log('Creating new assessment');
             assessment = await httpRequest('/assessments', {
               method: 'POST',
               body: JSON.stringify({
@@ -147,7 +174,7 @@ export default function AssessmentFlow() {
         error: error instanceof Error ? error.message : 'Failed to load assessment',
       }));
     }
-  }, [user?.id, session?.access_token]);
+  }, [user?.id, session?.access_token, resumeAssessmentId]);
 
   useEffect(() => {
     initialize();
