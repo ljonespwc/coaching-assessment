@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
 import { fetchDashboardData, DashboardData, deleteAssessment } from '@/lib/dashboard-service';
 import { motion } from 'framer-motion';
+import RecommendationPlaceholder from '@/components/placeholders/RecommendationPlaceholder';
 
 interface DashboardState {
   loading: boolean;
@@ -491,21 +492,11 @@ export default function DashboardPage() {
             {/* Recommendations */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Recommendations</h3>
-              {data.recommendations.length === 0 ? (
-                <p className="text-gray-500 text-sm">Complete an assessment to get personalized course recommendations.</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.recommendations.slice(0, 3).map((rec) => (
-                    <div key={rec.id} className="border border-gray-200 rounded-lg p-3">
-                      <h4 className="font-medium text-gray-900 text-sm mb-1">{rec.course_name}</h4>
-                      <p className="text-xs text-gray-500 mb-2">{rec.reason}</p>
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                        {rec.recommendation_type.replace('_', ' ')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <RecommendationPlaceholder 
+                type="course" 
+                title="Personalized Course Recommendations"
+                description="AI-powered course recommendations will be available based on your assessment results and learning goals."
+              />
             </div>
 
             {/* Achievements */}
