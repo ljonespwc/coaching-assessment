@@ -6,6 +6,8 @@ import { useAuth } from '@/components/auth/auth-provider';
 import QuestionCard from './question-card';
 import AssessmentNavigation from './assessment-navigation';
 import CompletionCelebration from './completion-celebration';
+import AssessmentWelcomeModal from './assessment-welcome-modal';
+import DomainIntroModal from './domain-intro-modal';
 
 import { Domain, Assessment, AssessmentResponse, Question } from '@/types/assessment';
 
@@ -75,6 +77,12 @@ export default function AssessmentFlow() {
   const [alreadyCelebratedDomains, setAlreadyCelebratedDomains] = useState<Set<number>>(new Set());
   const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
   
+  // Modal state
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showDomainIntroModal, setShowDomainIntroModal] = useState(false);
+  const [currentDomainIntro, setCurrentDomainIntro] = useState<number | null>(null);
+  const [seenDomainIntros, setSeenDomainIntros] = useState<Set<number>>(new Set());
+  
   // Prevent multiple simultaneous initialization calls
   const initializingRef = useRef(false);
 
@@ -140,6 +148,14 @@ export default function AssessmentFlow() {
           // Create new assessment if none found
           if (!assessment) {
             console.log('Creating new assessment');
+            
+            // Check if this is the user's first assessment (for welcome modal)
+            const completedAssessments = await httpRequest(`/assessments?user_id=eq.${user.id}&status=eq.completed&select=id`, {}, accessToken) as unknown[];
+            const isFirstAssessment = completedAssessments.length === 0;
+            
+            if (isFirstAssessment) {
+              setShowWelcomeModal(true);
+            }
             try {
               assessment = await httpRequest('/assessments', {
                 method: 'POST',
@@ -286,7 +302,18 @@ export default function AssessmentFlow() {
     if (state.currentIndex < state.questions.length - 1) {
       setTimeout(async () => {
         const newIndex = state.currentIndex + 1;
+        const nextQuestion = state.questions[newIndex];
+        const currentDomainId = currentQuestion.domain_id;
+        const nextDomainId = nextQuestion?.domain_id;
+        
         setState(prev => ({ ...prev, currentIndex: newIndex }));
+        
+        // Check if we're transitioning to a new domain
+        if (nextQuestion && nextDomainId !== currentDomainId && !seenDomainIntros.has(nextDomainId)) {
+          setCurrentDomainIntro(nextDomainId);
+          setShowDomainIntroModal(true);
+          setSeenDomainIntros(prev => new Set([...prev, nextDomainId]));
+        }
         
         try {
           if (state.assessment) {
@@ -460,6 +487,21 @@ export default function AssessmentFlow() {
         <CompletionCelebration
           isComplete={showCompletionCelebration}
           onComplete={() => setShowCompletionCelebration(false)}
+        />
+
+        {/* Welcome Modal for First-Time Users */}
+        <AssessmentWelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={() => setShowWelcomeModal(false)}
+          onStart={() => setShowWelcomeModal(false)}
+        />
+
+        {/* Domain Introduction Modal */}
+        <DomainIntroModal
+          isOpen={showDomainIntroModal}
+          onClose={() => setShowDomainIntroModal(false)}
+          onContinue={() => setShowDomainIntroModal(false)}
+          domainId={currentDomainIntro || 1}
         />
       </div>
     </div>
