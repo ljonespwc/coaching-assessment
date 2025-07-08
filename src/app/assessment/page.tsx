@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import AssessmentFlow from '@/components/assessment/assessment-flow';
 
 export default function AssessmentPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
   // Handle redirect in useEffect to avoid setState during render
@@ -41,5 +41,46 @@ export default function AssessmentPage() {
     );
   }
 
-  return <AssessmentFlow />;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <button
+                onClick={() => router.push('/')}
+                className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+              >
+                Home
+              </button>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/results')}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Latest Results
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <AssessmentFlow />
+    </div>
+  );
 }

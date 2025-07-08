@@ -413,7 +413,7 @@ export default function AssessmentFlow() {
 
   if (state.loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading assessment...</p>
@@ -424,7 +424,7 @@ export default function AssessmentFlow() {
 
   if (state.error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-4">
             <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,7 +446,7 @@ export default function AssessmentFlow() {
 
   if (state.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">No questions available.</p>
         </div>
@@ -460,8 +460,8 @@ export default function AssessmentFlow() {
   const finalQuestionAnswered = isOnFinalQuestion && currentResponse !== undefined;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-6">
+    <div className="py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <QuestionCard
           question={currentQuestion}
           currentAnswer={currentResponse || null}

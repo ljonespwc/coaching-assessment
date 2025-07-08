@@ -81,7 +81,7 @@ export default function QuestionCard({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Domain Progress Boxes */}
-      <div className="mb-6 grid grid-cols-2 gap-3">
+      <div className="mb-8 grid grid-cols-2 gap-4">
         {sortedDomains.map((domain) => {
           const status = getDomainStatus(domain.id);
           const progress = getDomainProgress(domain.id);
@@ -91,10 +91,10 @@ export default function QuestionCard({
           return (
             <motion.div
               key={domain.id}
-              className={`relative p-3 rounded-lg border-2 transition-all duration-200 group cursor-help ${
+              className={`relative p-4 rounded-xl border-2 transition-all duration-200 group cursor-help shadow-sm hover:shadow-md ${
                 isActive 
-                  ? 'border-current shadow-md' 
-                  : 'border-gray-200'
+                  ? 'border-current shadow-lg' 
+                  : 'border-gray-200 bg-white'
               }`}
               style={{
                 borderColor: isActive ? domain.color_hex : undefined,
@@ -236,14 +236,14 @@ export default function QuestionCard({
       </div>
 
       {/* Overall Progress */}
-      <div className="mb-6">
-        <div className="space-y-2">
-          <div className="text-sm text-gray-600">
-            Displaying: Question {questionNumber} of {totalQuestions}
+      <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="space-y-3">
+          <div className="text-base font-medium text-gray-700">
+            Question {questionNumber} of {totalQuestions}
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-3">
             <div 
-              className="h-2 rounded-full transition-all duration-300"
+              className="h-3 rounded-full transition-all duration-300 shadow-sm"
               style={{ 
                 backgroundColor: '#3B82F6',
                 width: `${(questionNumber / totalQuestions) * 100}%` 
@@ -254,7 +254,7 @@ export default function QuestionCard({
       </div>
 
       {/* Question */}
-      <div className="mb-6 min-h-[120px] flex items-center">
+      <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[160px] flex items-center">
         <AnimatePresence mode="wait">
           <motion.h2
             key={questionIndex}
@@ -265,7 +265,7 @@ export default function QuestionCard({
               duration: 0.25,
               ease: "easeInOut"
             }}
-            className="text-2xl font-semibold text-gray-900 leading-relaxed w-full"
+            className="text-3xl font-semibold text-gray-900 leading-relaxed w-full text-center"
           >
             {question.question_text}
           </motion.h2>
@@ -273,8 +273,8 @@ export default function QuestionCard({
       </div>
 
       {/* Likert Scale */}
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-6 text-center">
+      <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <h3 className="text-xl font-medium text-gray-700 mb-8 text-center">
           How much do you agree with this statement?
         </h3>
         
@@ -289,10 +289,10 @@ export default function QuestionCard({
                   onAnswerSelect(option.value);
                 }
               }}
-              className={`relative overflow-hidden flex-1 p-4 rounded-lg border-2 transition-all duration-200 ${
+              className={`relative overflow-hidden flex-1 p-4 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md ${
                 currentAnswer === option.value
                   ? 'text-white border-transparent' 
-                  : 'text-gray-700 border-gray-300 hover:border-gray-400'
+                  : 'text-gray-700 border-gray-300 hover:border-gray-400 bg-white'
               } ${isComplete ? 'opacity-60' : ''}`}
               style={{
                 backgroundColor: currentAnswer === option.value ? domainColor : 'transparent',
