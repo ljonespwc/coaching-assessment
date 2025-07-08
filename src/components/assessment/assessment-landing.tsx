@@ -8,7 +8,7 @@ import EmailGate from '@/components/auth/email-gate';
 
 export function AssessmentLanding() {
   const router = useRouter();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const [showEmailGate, setShowEmailGate] = useState(false);
   const [isStartingAssessment, setIsStartingAssessment] = useState(false);
 
@@ -75,12 +75,6 @@ export function AssessmentLanding() {
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Latest Results
-                </button>
-                <button
-                  onClick={() => signOut()}
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Sign out
                 </button>
               </div>
             )}

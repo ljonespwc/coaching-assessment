@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import AssessmentFlow from '@/components/assessment/assessment-flow';
 
 export default function AssessmentPage() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   // Handle redirect in useEffect to avoid setState during render
@@ -68,12 +68,6 @@ export default function AssessmentPage() {
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Latest Results
-              </button>
-              <button
-                onClick={() => signOut()}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Sign out
               </button>
             </div>
           </div>

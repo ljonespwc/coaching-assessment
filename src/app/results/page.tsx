@@ -21,7 +21,7 @@ interface ResultsPageState {
 }
 
 export default function ResultsPage() {
-  const { user, session, loading: authLoading, signOut } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [state, setState] = useState<ResultsPageState>({
     loading: true,
     error: null,
@@ -247,12 +247,6 @@ export default function ResultsPage() {
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Latest Results
-              </button>
-              <button
-                onClick={() => signOut()}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Sign out
               </button>
             </div>
           </div>

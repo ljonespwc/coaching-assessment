@@ -254,7 +254,10 @@ export default function QuestionCard({
       </div>
 
       {/* Question */}
-      <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[160px] flex items-center">
+      <div 
+        className="mb-8 rounded-xl shadow-sm border border-gray-100 p-8 min-h-[160px] flex items-center"
+        style={{ backgroundColor: `${domainColor}80` }}
+      >
         <AnimatePresence mode="wait">
           <motion.h2
             key={questionIndex}
