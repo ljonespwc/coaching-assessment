@@ -7,6 +7,7 @@ interface DomainIntroModalProps {
   isOpen: boolean;
   onClose: () => void;
   onContinue: () => void;
+  onSkipAll: () => void;
   domainId: number;
 }
 
@@ -84,6 +85,7 @@ export default function DomainIntroModal({
   isOpen, 
   onClose, 
   onContinue,
+  onSkipAll,
   domainId
 }: DomainIntroModalProps) {
   if (!isOpen) return null;
@@ -93,6 +95,11 @@ export default function DomainIntroModal({
 
   const handleContinue = () => {
     onContinue();
+    onClose();
+  };
+
+  const handleSkipAll = () => {
+    onSkipAll();
     onClose();
   };
 
@@ -120,7 +127,7 @@ export default function DomainIntroModal({
             <div className="text-center">
               <div className="text-4xl mb-3">{content.emoji}</div>
               <h2 className="text-2xl font-bold mb-2">
-                {content.title}
+                Next Up: {content.title}
               </h2>
               <p className="text-white/90 font-medium">
                 {content.subtitle}
@@ -151,13 +158,13 @@ export default function DomainIntroModal({
                 onClick={handleContinue}
                 className={`flex-1 bg-gradient-to-r ${content.color} text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]`}
               >
-                Continue Assessment
+                Start Questions
               </button>
               <button
-                onClick={onClose}
-                className="sm:w-auto px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors"
+                onClick={handleSkipAll}
+                className="sm:w-auto px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors text-sm"
               >
-                Skip intro
+                Skip all intros
               </button>
             </div>
           </div>

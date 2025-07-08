@@ -82,6 +82,7 @@ export default function AssessmentFlow() {
   const [showDomainIntroModal, setShowDomainIntroModal] = useState(false);
   const [currentDomainIntro, setCurrentDomainIntro] = useState<number | null>(null);
   const [seenDomainIntros, setSeenDomainIntros] = useState<Set<number>>(new Set());
+  const [skipAllDomainIntros, setSkipAllDomainIntros] = useState(false);
   
   // Prevent multiple simultaneous initialization calls
   const initializingRef = useRef(false);
@@ -309,7 +310,7 @@ export default function AssessmentFlow() {
         setState(prev => ({ ...prev, currentIndex: newIndex }));
         
         // Check if we're transitioning to a new domain
-        if (nextQuestion && nextDomainId !== currentDomainId && !seenDomainIntros.has(nextDomainId)) {
+        if (nextQuestion && nextDomainId !== currentDomainId && !seenDomainIntros.has(nextDomainId) && !skipAllDomainIntros) {
           setCurrentDomainIntro(nextDomainId);
           setShowDomainIntroModal(true);
           setSeenDomainIntros(prev => new Set([...prev, nextDomainId]));
@@ -501,6 +502,10 @@ export default function AssessmentFlow() {
           isOpen={showDomainIntroModal}
           onClose={() => setShowDomainIntroModal(false)}
           onContinue={() => setShowDomainIntroModal(false)}
+          onSkipAll={() => {
+            setSkipAllDomainIntros(true);
+            setShowDomainIntroModal(false);
+          }}
           domainId={currentDomainIntro || 1}
         />
       </div>
