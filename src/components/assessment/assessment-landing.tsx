@@ -119,106 +119,6 @@ export function AssessmentLanding() {
           </div>
         </div>
 
-        {/* Credibility Section */}
-        <div className="mt-32 py-16 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl shadow-lg text-white">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              The Gold Standard in Nutrition Coaching Assessment
-            </h2>
-            <p className="text-lg text-orange-100 max-w-3xl mx-auto">
-              Built on 18+ years of coaching excellence, this assessment has guided over 150,000 professionals from career exploration to mastery—whether you&apos;re just starting out or advancing your expertise.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">150,000+</div>
-              <div className="text-orange-100">Professionals Guided</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">18+</div>
-              <div className="text-orange-100">Years Proven</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">100+</div>
-              <div className="text-orange-100">Countries Worldwide</div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-orange-200 mb-4">Trusted by leading organizations worldwide</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-80">
-              <div className="text-orange-100 font-semibold">Nike</div>
-              <div className="text-orange-100 font-semibold">NBA</div>
-              <div className="text-orange-100 font-semibold">Women&apos;s Health</div>
-              <div className="text-orange-100 font-semibold">Men&apos;s Health</div>
-              <div className="text-orange-100 font-semibold">TIME</div>
-            </div>
-          </div>
-        </div>
-
-        {/* How It Works Section */}
-        <div className="mt-32 py-20 bg-gradient-to-r from-teal-400 to-cyan-500 rounded-2xl text-white">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              How It Works for You
-            </h2>
-            <p className="text-xl text-teal-100 max-w-3xl mx-auto">
-              A comprehensive evaluation that meets you where you are—whether you&apos;re exploring the field, growing your practice, or measuring your progress through certification.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            {[
-              { 
-                step: '1', 
-                title: 'Self-Evaluate', 
-                description: 'Answer 55 questions about real coaching scenarios and challenges',
-                benefit: 'Know where you stand'
-              },
-              { 
-                step: '2', 
-                title: 'Rate Yourself', 
-                description: 'Honestly assess your confidence across 6 core competency areas',
-                benefit: 'Identify your gaps'
-              },
-              { 
-                step: '3', 
-                title: 'See Your Results', 
-                description: 'Get a detailed breakdown of your strengths and growth areas',
-                benefit: 'Understand your profile'
-              },
-              { 
-                step: '4', 
-                title: 'Track Progress', 
-                description: 'Retake to measure improvement after training or experience',
-                benefit: 'See your growth'
-              },
-              { 
-                step: '5', 
-                title: 'Take Action', 
-                description: 'Use insights to guide career decisions or skill development',
-                benefit: 'Make informed choices'
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="w-16 h-16 bg-white text-teal-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {item.description}
-                </p>
-                <div className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
-                  {item.benefit}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Value Proposition Section */}
         <div className="mt-32 py-20 bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl text-white">
           <div className="text-center mb-16">
@@ -269,6 +169,108 @@ export function AssessmentLanding() {
             <p className="mt-4 text-gray-400">
               Join 150,000+ professionals who have discovered their path in nutrition coaching
             </p>
+          </div>
+        </div>
+
+        {/* How It Works Section */}
+        <div className="mt-32 py-20 bg-gradient-to-r from-teal-400 to-cyan-500 rounded-2xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              How It Works for You
+            </h2>
+            <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+              A comprehensive evaluation that meets you where you are—whether you&apos;re exploring the field, growing your practice, or measuring your progress through certification.
+            </p>
+          </div>
+          
+          <div className="px-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {[
+                { 
+                  step: '1', 
+                  title: 'Self-Evaluate', 
+                  description: 'Answer 55 questions about real coaching scenarios and challenges',
+                  benefit: 'Know where you stand'
+                },
+                { 
+                  step: '2', 
+                  title: 'Rate Yourself', 
+                  description: 'Honestly assess your confidence across 6 core competency areas',
+                  benefit: 'Identify your gaps'
+                },
+                { 
+                  step: '3', 
+                  title: 'See Your Results', 
+                  description: 'Get a detailed breakdown of your strengths and growth areas',
+                  benefit: 'Understand your profile'
+                },
+                { 
+                  step: '4', 
+                  title: 'Track Progress', 
+                  description: 'Retake to measure improvement after training or experience',
+                  benefit: 'See your growth'
+                },
+                { 
+                  step: '5', 
+                  title: 'Take Action', 
+                  description: 'Use insights to guide career decisions or skill development',
+                  benefit: 'Make informed choices'
+                },
+              ].map((item) => (
+                <div key={item.step} className="text-center bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="w-16 h-16 bg-white text-teal-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-lg">
+                    {item.step}
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {item.description}
+                  </p>
+                  <div className="px-3 py-1 bg-gray-800 text-white text-xs font-medium rounded-full">
+                    {item.benefit}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Credibility Section */}
+        <div className="mt-32 py-12 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl shadow-lg">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              The Gold Standard in Nutrition Coaching Assessment
+            </h2>
+            <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+              Built on 18+ years of coaching excellence, this assessment has guided over 150,000 professionals from career exploration to mastery—whether you&apos;re just starting out or advancing your expertise.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-900 mb-2">150,000+</div>
+              <div className="text-gray-700">Professionals Guided</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-900 mb-2">18+</div>
+              <div className="text-gray-700">Years Proven</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-900 mb-2">100+</div>
+              <div className="text-gray-700">Countries Worldwide</div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600 mb-4">Trusted by leading organizations worldwide</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 opacity-80">
+              <div className="text-gray-700 font-semibold">Nike</div>
+              <div className="text-gray-700 font-semibold">NBA</div>
+              <div className="text-gray-700 font-semibold">Women&apos;s Health</div>
+              <div className="text-gray-700 font-semibold">Men&apos;s Health</div>
+              <div className="text-gray-700 font-semibold">TIME</div>
+            </div>
           </div>
         </div>
       </main>
