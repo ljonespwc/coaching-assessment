@@ -20,7 +20,7 @@ interface DeleteConfirmationState {
 }
 
 export default function DashboardPage() {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const [state, setState] = useState<DashboardState>({
     loading: true,
     error: null,
@@ -199,17 +199,20 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">
-                Precision Nutrition
-              </h1>
+              <button
+                onClick={() => window.location.href = '/'}
+                className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+              >
+                Home
+              </button>
             </div>
             
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = '/dashboard'}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                Home
+                Dashboard
               </button>
               <button
                 onClick={() => window.location.href = '/results'}
@@ -218,15 +221,10 @@ export default function DashboardPage() {
                 Latest Results
               </button>
               <button
-                onClick={handleStartAssessment}
-                disabled={isStartingAssessment}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isStartingAssessment 
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+                onClick={() => signOut()}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                {isStartingAssessment ? 'Starting...' : 'New Assessment'}
+                Sign out
               </button>
             </div>
           </div>

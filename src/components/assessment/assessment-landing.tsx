@@ -8,7 +8,7 @@ import EmailGate from '@/components/auth/email-gate';
 
 export function AssessmentLanding() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [showEmailGate, setShowEmailGate] = useState(false);
   const [isStartingAssessment, setIsStartingAssessment] = useState(false);
 
@@ -54,9 +54,12 @@ export function AssessmentLanding() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">
-                Precision Nutrition
-              </h1>
+              <button
+                onClick={() => router.push('/')}
+                className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+              >
+                Home
+              </button>
             </div>
             
             {user && (
@@ -71,7 +74,13 @@ export function AssessmentLanding() {
                   onClick={() => router.push('/results')}
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
-                  Results
+                  Latest Results
+                </button>
+                <button
+                  onClick={() => signOut()}
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign out
                 </button>
               </div>
             )}

@@ -21,7 +21,7 @@ interface ResultsPageState {
 }
 
 export default function ResultsPage() {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const [state, setState] = useState<ResultsPageState>({
     loading: true,
     error: null,
@@ -135,12 +135,6 @@ export default function ResultsPage() {
     window.location.href = '/assessment';
   };
 
-  const handleStartAssessment = () => {
-    if (isStartingAssessment) return; // Prevent double-clicks
-    
-    setIsStartingAssessment(true);
-    window.location.href = '/assessment';
-  };
 
 
   if (state.loading) {
@@ -233,18 +227,15 @@ export default function ResultsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">
-                Precision Nutrition
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
               <button
                 onClick={() => window.location.href = '/'}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
               >
                 Home
               </button>
+            </div>
+            
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => window.location.href = '/dashboard'}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -252,15 +243,16 @@ export default function ResultsPage() {
                 Dashboard
               </button>
               <button
-                onClick={handleStartAssessment}
-                disabled={isStartingAssessment}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isStartingAssessment 
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+                onClick={() => window.location.href = '/results'}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
-                {isStartingAssessment ? 'Starting...' : 'New Assessment'}
+                Latest Results
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Sign out
               </button>
             </div>
           </div>
