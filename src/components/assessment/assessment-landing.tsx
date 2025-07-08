@@ -92,16 +92,15 @@ export function AssessmentLanding() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <div className="mb-6">
-            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800">
               Powered by Precision Nutrition
             </span>
           </div>
           <h1 className="text-5xl font-bold text-gray-900 sm:text-6xl md:text-7xl leading-tight">
-            Discover Your <span className="text-blue-600">Coaching Superpowers</span>
+            Discover Your <span className="text-blue-600">Nutrition Coaching</span> Potential
           </h1>
           <p className="mt-8 text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            The same comprehensive assessment framework trusted by Precision Nutrition&apos;s world-class coaching network. 
-            Uncover your unique strengths, identify growth opportunities, and unlock your full potential as a nutrition coach.
+            Whether you&apos;re exploring coaching as a career, looking to level up your skills, or measuring your certification progress—this assessment reveals exactly where you stand across the core competencies that matter most.
           </p>
           
           <div className="mt-12">
@@ -112,7 +111,7 @@ export function AssessmentLanding() {
               onClick={handleStartAssessment}
               disabled={isStartingAssessment}
             >
-              {isStartingAssessment ? 'UNLOCKING YOUR PROFILE...' : 'UNLOCK MY COACHING PROFILE'}
+              {isStartingAssessment ? 'STARTING ASSESSMENT...' : 'DISCOVER WHERE I STAND'}
             </Button>
             <p className="mt-6 text-base text-gray-500">
               ⏱️ Takes about 15 minutes  •  🔒 Results are private  •  📊 Instant detailed analysis
@@ -121,51 +120,51 @@ export function AssessmentLanding() {
         </div>
 
         {/* Credibility Section */}
-        <div className="mt-32 py-16 bg-white rounded-2xl shadow-lg">
+        <div className="mt-32 py-16 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl shadow-lg text-white">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Trusted by World-Class Coaching Professionals
+            <h2 className="text-3xl font-bold text-white mb-4">
+              The Gold Standard in Nutrition Coaching Assessment
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              This assessment is built on the same framework that has certified over 150,000 nutrition coaches worldwide since 2005.
+            <p className="text-lg text-orange-100 max-w-3xl mx-auto">
+              Built on 18+ years of coaching excellence, this assessment has guided over 150,000 professionals from career exploration to mastery—whether you&apos;re just starting out or advancing your expertise.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">150,000+</div>
-              <div className="text-gray-600">Certified Coaches</div>
+              <div className="text-4xl font-bold text-white mb-2">150,000+</div>
+              <div className="text-orange-100">Professionals Guided</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">18+</div>
-              <div className="text-gray-600">Years of Excellence</div>
+              <div className="text-4xl font-bold text-white mb-2">18+</div>
+              <div className="text-orange-100">Years Proven</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">100+</div>
-              <div className="text-gray-600">Countries Served</div>
+              <div className="text-4xl font-bold text-white mb-2">100+</div>
+              <div className="text-orange-100">Countries Worldwide</div>
             </div>
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-4">Trusted by leading organizations worldwide</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-              <div className="text-gray-400 font-semibold">Nike</div>
-              <div className="text-gray-400 font-semibold">NBA</div>
-              <div className="text-gray-400 font-semibold">Women&apos;s Health</div>
-              <div className="text-gray-400 font-semibold">Men&apos;s Health</div>
-              <div className="text-gray-400 font-semibold">TIME</div>
+            <p className="text-sm text-orange-200 mb-4">Trusted by leading organizations worldwide</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 opacity-80">
+              <div className="text-orange-100 font-semibold">Nike</div>
+              <div className="text-orange-100 font-semibold">NBA</div>
+              <div className="text-orange-100 font-semibold">Women&apos;s Health</div>
+              <div className="text-orange-100 font-semibold">Men&apos;s Health</div>
+              <div className="text-orange-100 font-semibold">TIME</div>
             </div>
           </div>
         </div>
 
         {/* How It Works Section */}
-        <div className="mt-32 py-20 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl">
+        <div className="mt-32 py-20 bg-gradient-to-r from-teal-400 to-cyan-500 rounded-2xl text-white">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Your Path to Coaching Excellence
+            <h2 className="text-4xl font-bold text-white mb-4">
+              How It Works for You
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              A simple, science-backed process that reveals your coaching DNA and accelerates your professional growth.
+            <p className="text-xl text-teal-100 max-w-3xl mx-auto">
+              A comprehensive evaluation that meets you where you are—whether you&apos;re exploring the field, growing your practice, or measuring your progress through certification.
             </p>
           </div>
           
@@ -173,37 +172,37 @@ export function AssessmentLanding() {
             {[
               { 
                 step: '1', 
-                title: 'Self-Assess', 
-                description: 'Reflect on 55 coaching scenarios across 6 core domains',
-                benefit: 'Gain deep self-awareness'
+                title: 'Self-Evaluate', 
+                description: 'Answer 55 questions about real coaching scenarios and challenges',
+                benefit: 'Know where you stand'
               },
               { 
                 step: '2', 
-                title: 'Rate Skills', 
-                description: 'Honestly evaluate your current abilities using our validated scale',
-                benefit: 'Identify blind spots'
+                title: 'Rate Yourself', 
+                description: 'Honestly assess your confidence across 6 core competency areas',
+                benefit: 'Identify your gaps'
               },
               { 
                 step: '3', 
-                title: 'See Your Profile', 
-                description: 'Receive your unique coaching strengths visualization',
-                benefit: 'Understand your superpower'
+                title: 'See Your Results', 
+                description: 'Get a detailed breakdown of your strengths and growth areas',
+                benefit: 'Understand your profile'
               },
               { 
                 step: '4', 
-                title: 'Track Growth', 
-                description: 'Monitor your skill development with retakes over time',
-                benefit: 'Measure real progress'
+                title: 'Track Progress', 
+                description: 'Retake to measure improvement after training or experience',
+                benefit: 'See your growth'
               },
               { 
                 step: '5', 
-                title: 'Level Up', 
-                description: 'Get personalized recommendations for skill enhancement',
-                benefit: 'Accelerate your career'
+                title: 'Take Action', 
+                description: 'Use insights to guide career decisions or skill development',
+                benefit: 'Make informed choices'
               },
             ].map((item) => (
               <div key={item.step} className="text-center bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6">
+                <div className="w-16 h-16 bg-white text-teal-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-lg">
                   {item.step}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
@@ -212,7 +211,7 @@ export function AssessmentLanding() {
                 <p className="text-sm text-gray-600 mb-4">
                   {item.description}
                 </p>
-                <div className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                <div className="px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full">
                   {item.benefit}
                 </div>
               </div>
@@ -224,44 +223,36 @@ export function AssessmentLanding() {
         <div className="mt-32 py-20 bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl text-white">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6">
-              Why Top Coaches Choose This Assessment
+              Perfect for Every Stage of Your Journey
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Join thousands of elite nutrition coaches who use this assessment to accelerate their careers and transform their coaching practice.
+              Whether you&apos;re considering nutrition coaching as a career path, building your existing practice, or validating your certification progress—this assessment provides the clarity you need.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎯</span>
+              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🤔</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Identify Your Unique Edge</h3>
-              <p className="text-gray-300 text-sm">Discover what makes you different from other coaches in the market</p>
+              <h3 className="text-lg font-semibold mb-2">Exploring Coaching?</h3>
+              <p className="text-gray-300 text-sm">Find out if you have the natural aptitude and interests for nutrition coaching before making a career commitment</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📈</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Accelerate Career Growth</h3>
-              <p className="text-gray-300 text-sm">Focus your development where it will have the biggest impact</p>
+              <h3 className="text-lg font-semibold mb-2">Growing Your Practice?</h3>
+              <p className="text-gray-300 text-sm">Identify exactly which skills to focus on for maximum impact on your coaching effectiveness and client results</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💡</span>
+              <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📊</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Gain Client Confidence</h3>
-              <p className="text-gray-300 text-sm">Know exactly where you excel and how to communicate your value</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🚀</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Stand Out in the Market</h3>
-              <p className="text-gray-300 text-sm">Use your assessment results to differentiate your coaching services</p>
+              <h3 className="text-lg font-semibold mb-2">Measuring Progress?</h3>
+              <p className="text-gray-300 text-sm">Track how your certification or training improved your competencies with before-and-after assessment comparisons</p>
             </div>
           </div>
 
@@ -273,10 +264,10 @@ export function AssessmentLanding() {
               onClick={handleStartAssessment}
               disabled={isStartingAssessment}
             >
-              {isStartingAssessment ? 'UNLOCKING YOUR POTENTIAL...' : 'START YOUR ASSESSMENT NOW'}
+              {isStartingAssessment ? 'STARTING ASSESSMENT...' : 'TAKE THE ASSESSMENT'}
             </Button>
             <p className="mt-4 text-gray-400">
-              Join 150,000+ coaches who have discovered their coaching superpowers
+              Join 150,000+ professionals who have discovered their path in nutrition coaching
             </p>
           </div>
         </div>
