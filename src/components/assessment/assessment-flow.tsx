@@ -15,16 +15,33 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 async function httpRequest(endpoint: string, options: RequestInit = {}, accessToken?: string): Promise<unknown> {
-  const response = await fetch(`${supabaseUrl}/rest/v1${endpoint}`, {
-    ...options,
-    headers: {
-      'apikey': supabaseKey,
-      'Authorization': `Bearer ${accessToken || supabaseKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-      ...options.headers,
-    },
-  });
+  const makeRequest = async (token?: string) => {
+    return await fetch(`${supabaseUrl}/rest/v1${endpoint}`, {
+      ...options,
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token || supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        ...options.headers,
+      },
+    });
+  };
+
+  let response = await makeRequest(accessToken);
+
+  // If auth failure, try to get fresh token and retry once
+  if (!response.ok && (response.status === 401 || response.status === 403) && accessToken) {
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token && session.access_token !== accessToken) {
+        response = await makeRequest(session.access_token);
+      }
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+    }
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
