@@ -205,9 +205,9 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
   try {
     console.log('Deleting assessment:', assessmentId, 'for user:', userId);
     
-    // First verify the assessment belongs to the user
+    // First verify the assessment belongs to the user and get its status
     const assessmentData = await httpRequest(
-      `/assessments?id=eq.${assessmentId}&user_id=eq.${userId}&select=id`,
+      `/assessments?id=eq.${assessmentId}&user_id=eq.${userId}&select=id,status`,
       {},
       accessToken
     ) as unknown[];
@@ -215,6 +215,9 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
     if (!assessmentData || assessmentData.length === 0) {
       throw new Error('Assessment not found or access denied');
     }
+    
+    const assessment = assessmentData[0] as { id: string; status: string };
+    const isCompletedAssessment = assessment.status === 'completed';
     
     // Check if this is the user's only completed assessment
     const remainingAssessments = await httpRequest(
@@ -238,6 +241,36 @@ export async function deleteAssessment(assessmentId: string, userId: string, acc
       } catch (error) {
         console.error('Failed to delete user progress data:', error);
         throw new Error('Failed to delete user progress data');
+      }
+    } else if (isCompletedAssessment) {
+      // If this is a completed assessment but not the only one, decrement the assessment count
+      try {
+        // First get the current assessment count
+        const currentProgressData = await httpRequest(
+          `/user_progress?user_id=eq.${userId}&select=assessment_count`,
+          {},
+          accessToken
+        ) as Array<{ assessment_count: number }>;
+        
+        if (currentProgressData && currentProgressData.length > 0) {
+          const currentCount = currentProgressData[0].assessment_count;
+          const newCount = Math.max(0, currentCount - 1);
+          
+          await httpRequest(
+            `/user_progress?user_id=eq.${userId}`,
+            {
+              method: 'PATCH',
+              body: JSON.stringify({
+                assessment_count: newCount
+              })
+            },
+            accessToken
+          );
+          console.log(`Decremented assessment count for user ${userId}: ${currentCount} -> ${newCount}`);
+        }
+      } catch (error) {
+        console.error('Failed to decrement assessment count:', error);
+        // Don't throw here as the assessment deletion should still proceed
       }
     }
     

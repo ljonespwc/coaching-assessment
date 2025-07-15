@@ -386,6 +386,86 @@ export default function AssessmentFlow() {
     }
   };
 
+  const checkAndCreateAchievements = async (userId: string, assessmentId: string) => {
+    try {
+      // Get the current number of completed assessments for this user
+      const completedAssessments = await httpRequest(
+        `/assessments?user_id=eq.${userId}&status=eq.completed&select=id`,
+        {},
+        session?.access_token
+      ) as unknown[];
+      
+      const completedCount = completedAssessments.length;
+      
+      // Define achievement milestones
+      const achievementMilestones = [
+        { count: 1, name: 'First Steps', description: 'Completed 1 coaching assessment' },
+        { count: 3, name: 'Committed Learner', description: 'Completed 3 coaching assessments' },
+        { count: 5, name: 'Dedicated Coach', description: 'Completed 5 coaching assessments' },
+        { count: 10, name: 'Expert Practitioner', description: 'Completed 10 coaching assessments' }
+      ];
+      
+      // Check if this completion count matches any milestone
+      const milestone = achievementMilestones.find(m => m.count === completedCount);
+      
+      if (milestone) {
+        // Check if this achievement already exists
+        const existingAchievement = await httpRequest(
+          `/user_achievements?user_id=eq.${userId}&achievement_name=eq.${milestone.name}&select=id`,
+          {},
+          session?.access_token
+        ) as unknown[];
+        
+        if (existingAchievement.length === 0) {
+          // Create the achievement
+          await httpRequest(
+            '/user_achievements',
+            {
+              method: 'POST',
+              body: JSON.stringify({
+                user_id: userId,
+                achievement_type: 'milestone',
+                achievement_name: milestone.name,
+                description: milestone.description,
+                requirements: { assessments_completed: milestone.count },
+                related_assessment_id: assessmentId,
+                metadata: {
+                  date: new Date().toISOString(),
+                  assessment_count: completedCount
+                }
+              })
+            },
+            session?.access_token
+          );
+          
+          console.log(`Achievement unlocked: ${milestone.name} (${completedCount} assessments)`);
+        } else {
+          // Update existing achievement to reflect new count
+          await httpRequest(
+            `/user_achievements?user_id=eq.${userId}&achievement_name=eq.${milestone.name}`,
+            {
+              method: 'PATCH',
+              body: JSON.stringify({
+                description: milestone.description,
+                requirements: { assessments_completed: milestone.count },
+                metadata: {
+                  date: new Date().toISOString(),
+                  assessment_count: completedCount
+                }
+              })
+            },
+            session?.access_token
+          );
+          
+          console.log(`Achievement updated: ${milestone.name} (${completedCount} assessments)`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check/create achievements:', error);
+      // Don't throw here as achievement creation failure shouldn't block assessment completion
+    }
+  };
+
   const completeAssessment = async () => {
     try {
       if (state.assessment) {
@@ -432,6 +512,9 @@ export default function AssessmentFlow() {
             percentage_score: Math.round(correctPercentage * 10) / 10
           })
         }, session?.access_token);
+        
+        // Check for and create achievements based on completed assessments
+        await checkAndCreateAchievements(state.assessment.user_id, state.assessment.id);
         
         console.log('Assessment completed successfully:', {
           frontendCalculation: scoreResults.totalScore,
