@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/auth-provider';
-import { fetchLatestAssessmentResults } from '@/lib/results-service';
+import { fetchLatestAssessmentResults, fetchAssessmentResults, AssessmentResultsData } from '@/lib/results-service';
 import { ScoreResults, DomainScore } from '@/lib/score-calculator';
 import { generateRecommendations, RecommendationsResult, DomainRecommendation } from '@/lib/recommendations-engine';
 import HexChart from '@/components/charts/hex-chart';
@@ -33,6 +33,11 @@ export default function ResultsPage() {
   });
   
   const [isStartingAssessment, setIsStartingAssessment] = useState(false);
+  const [isRetryingResults, setIsRetryingResults] = useState(false);
+  
+  // Get assessment ID from URL parameters
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const specificAssessmentId = urlParams?.get('assessment');
 
   useEffect(() => {
     const loadResults = async (retryCount = 0) => {
@@ -48,10 +53,21 @@ export default function ResultsPage() {
 
       try {
         console.log('Loading results for user:', user.id);
-        const assessmentData = await fetchLatestAssessmentResults(user.id, session?.access_token);
+        
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 10000); // 10 second timeout
+        });
+        
+        const assessmentPromise = specificAssessmentId 
+          ? fetchAssessmentResults(specificAssessmentId, session?.access_token)
+          : fetchLatestAssessmentResults(user.id, session?.access_token);
+        const assessmentData = await Promise.race([assessmentPromise, timeoutPromise]) as AssessmentResultsData | null;
+        
         console.log('Assessment data received:', assessmentData);
         const results = assessmentData?.scoreResults || null;
         console.log('Score results:', results);
+        
         
         // If no results found and this is the first attempt, wait and retry
         // This handles the case where assessment completion is still processing
@@ -88,9 +104,20 @@ export default function ResultsPage() {
         });
       } catch (error) {
         console.error('Failed to load results:', error);
+        
+        // Better error handling with specific messages
+        let errorMessage = 'Failed to load assessment results. Please try again.';
+        if (error instanceof Error) {
+          if (error.message.includes('timeout')) {
+            errorMessage = 'Request timed out. Please check your connection and try again.';
+          } else if (error.message.includes('Assessment not found')) {
+            errorMessage = 'No completed assessments found. Please complete an assessment first.';
+          }
+        }
+        
         setState({ 
           loading: false, 
-          error: 'Failed to load assessment results. Please try again.', 
+          error: errorMessage, 
           results: null,
           recommendations: null,
           selectedDomain: null,
@@ -101,7 +128,70 @@ export default function ResultsPage() {
     };
 
     loadResults();
-  }, [user, session, authLoading]);
+  }, [user, session, authLoading, specificAssessmentId]);
+
+  const handleRetryResults = async () => {
+    if (isRetryingResults) return;
+    
+    setIsRetryingResults(true);
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 10000);
+      });
+      
+      const assessmentPromise = specificAssessmentId 
+        ? fetchAssessmentResults(specificAssessmentId, session?.access_token)
+        : fetchLatestAssessmentResults(user?.id || '', session?.access_token);
+      const assessmentData = await Promise.race([assessmentPromise, timeoutPromise]) as AssessmentResultsData | null;
+      
+      const results = assessmentData?.scoreResults || null;
+      
+      if (!results) {
+        setState({ 
+          loading: false, 
+          error: 'No completed assessments found. Please complete an assessment first.', 
+          results: null,
+          recommendations: null,
+          selectedDomain: null,
+          selectedRecommendation: null,
+          isModalOpen: false
+        });
+        return;
+      }
+      
+      const recommendations = generateRecommendations(results.domainScores);
+      
+      setState({ 
+        loading: false, 
+        error: null, 
+        results,
+        recommendations,
+        selectedDomain: null,
+        selectedRecommendation: null,
+        isModalOpen: false
+      });
+    } catch (error) {
+      console.error('Retry failed:', error);
+      let errorMessage = 'Failed to load assessment results. Please try again.';
+      if (error instanceof Error && error.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      }
+      
+      setState({ 
+        loading: false, 
+        error: errorMessage, 
+        results: null,
+        recommendations: null,
+        selectedDomain: null,
+        selectedRecommendation: null,
+        isModalOpen: false
+      });
+    } finally {
+      setIsRetryingResults(false);
+    }
+  };
 
   const handleDomainClick = (domainId: number) => {
     if (!state.results || !state.recommendations) return;
@@ -165,17 +255,30 @@ export default function ResultsPage() {
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Results</h2>
               <p className="text-gray-600 mb-6">{state.error}</p>
-              <button 
-                onClick={handleRetakeAssessment}
-                disabled={isStartingAssessment}
-                className={`px-6 py-3 rounded-lg transition-colors ${
-                  isStartingAssessment 
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                {isStartingAssessment ? 'Starting...' : 'Take Assessment'}
-              </button>
+              <div className="flex gap-4 justify-center">
+                <button 
+                  onClick={handleRetryResults}
+                  disabled={isRetryingResults}
+                  className={`px-6 py-3 rounded-lg transition-colors ${
+                    isRetryingResults 
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  {isRetryingResults ? 'Retrying...' : 'Retry Loading'}
+                </button>
+                <button 
+                  onClick={handleRetakeAssessment}
+                  disabled={isStartingAssessment}
+                  className={`px-6 py-3 rounded-lg transition-colors ${
+                    isStartingAssessment 
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isStartingAssessment ? 'Starting...' : 'Take Assessment'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -210,11 +313,14 @@ export default function ResultsPage() {
   }
 
   const { results } = state;
+  
+  // Use current date for now (we'll need to restructure state to access assessment data)
   const completionDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
+  
   const completionTime = new Date().toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit'
@@ -267,11 +373,16 @@ export default function ResultsPage() {
             <div className="mb-6">
               <div className="text-6xl mb-4">🏆</div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Assessment Complete!
+                {specificAssessmentId ? 'Assessment Results' : 'Assessment Complete!'}
               </h1>
               <p className="text-gray-600">
                 Completed on {completionDate} at {completionTime}
               </p>
+              {specificAssessmentId && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Viewing specific assessment results
+                </p>
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">

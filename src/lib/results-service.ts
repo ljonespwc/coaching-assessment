@@ -70,6 +70,8 @@ export async function fetchAssessmentResults(
   accessToken?: string
 ): Promise<AssessmentResultsData> {
   try {
+    console.log('Fetching assessment results for ID:', assessmentId);
+    
     // Fetch assessment details
     const assessmentData = await httpRequest(
       `/assessments?id=eq.${assessmentId}&select=*`,
@@ -82,6 +84,7 @@ export async function fetchAssessmentResults(
     }
 
     const assessment = assessmentData[0] as Assessment;
+    console.log('Assessment loaded:', assessment.id, 'status:', assessment.status);
 
     // Fetch assessment responses
     const responsesData = await httpRequest(
@@ -89,6 +92,12 @@ export async function fetchAssessmentResults(
       {},
       accessToken
     ) as AssessmentResponse[];
+    
+    console.log('Responses loaded:', responsesData.length);
+    
+    if (responsesData.length === 0) {
+      throw new Error('No responses found for this assessment');
+    }
 
     // Fetch questions with domain information
     const questionsData = await httpRequest(
@@ -107,6 +116,8 @@ export async function fetchAssessmentResults(
         domains: question.domains as Domain || null
       };
     });
+    
+    console.log('Questions loaded:', questions.length);
 
     // Fetch domain data
     const domainsData = await httpRequest(
@@ -114,6 +125,8 @@ export async function fetchAssessmentResults(
       {},
       accessToken
     ) as Domain[];
+    
+    console.log('Domains loaded:', domainsData.length);
 
     // Convert responses to lookup format
     const responsesLookup: Record<string, number> = {};
@@ -122,7 +135,9 @@ export async function fetchAssessmentResults(
     });
 
     // Calculate score results
+    console.log('Calculating scores...');
     const scoreResults = calculateScoreResults(responsesLookup, questions, domainsData);
+    console.log('Score calculation complete:', scoreResults.totalScore);
 
     return {
       assessment,
@@ -134,6 +149,20 @@ export async function fetchAssessmentResults(
 
   } catch (error) {
     console.error('Failed to fetch assessment results:', error);
+    
+    // More specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Assessment not found')) {
+        throw new Error('Assessment not found');
+      }
+      if (error.message.includes('No responses found')) {
+        throw new Error('Assessment has no responses - please complete the assessment first');
+      }
+      if (error.message.includes('timeout')) {
+        throw new Error('Request timed out while loading results');
+      }
+    }
+    
     throw new Error('Failed to load assessment results. Please try again.');
   }
 }
@@ -160,18 +189,38 @@ export async function fetchLatestAssessmentResults(
 
     if (!assessmentData || assessmentData.length === 0) {
       console.log('No completed assessments found');
+      
+      // Check if user has any assessments at all
+      const anyAssessments = await httpRequest(
+        `/assessments?user_id=eq.${userId}&select=id,status,created_at&order=created_at.desc&limit=1`,
+        {},
+        accessToken
+      ) as unknown[];
+      
+      if (anyAssessments && anyAssessments.length > 0) {
+        const assessment = anyAssessments[0] as { id: string; status: string; created_at: string };
+        console.log('Found incomplete assessment:', assessment.id, 'status:', assessment.status);
+        throw new Error(`Assessment found but not completed (status: ${assessment.status}). Please complete your assessment first.`);
+      }
+      
       return null;
     }
 
     const assessment = assessmentData[0] as Assessment;
     console.log('Found assessment:', assessment.id);
+    
+    // Validate assessment has required data
+    if (!assessment.total_score) {
+      console.warn('Assessment missing total_score, attempting to recalculate');
+    }
+    
     const result = await fetchAssessmentResults(assessment.id, accessToken);
     console.log('Assessment results loaded successfully');
     return result;
 
   } catch (error) {
     console.error('Failed to fetch latest assessment results:', error);
-    return null;
+    throw error; // Re-throw to provide better error handling upstream
   }
 }
 

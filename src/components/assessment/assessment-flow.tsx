@@ -88,7 +88,8 @@ export default function AssessmentFlow() {
     error: null,
   });
 
-  const [showSaved, setShowSaved] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [celebratingDomains, setCelebratingDomains] = useState<Set<number>>(new Set());
   const [alreadyCelebratedDomains, setAlreadyCelebratedDomains] = useState<Set<number>>(new Set());
@@ -236,6 +237,18 @@ export default function AssessmentFlow() {
     }
   }, [user?.id, session?.access_token, resumeAssessmentId]);
 
+  const retryLastSave = async () => {
+    if (saveStatus !== 'error') return;
+    
+    const currentQuestion = state.questions[state.currentIndex];
+    if (!currentQuestion) return;
+    
+    const currentValue = state.responses[currentQuestion.id];
+    if (currentValue === undefined) return;
+    
+    await handleAnswerSelect(currentValue);
+  };
+
   useEffect(() => {
     initialize();
   }, [initialize]);
@@ -278,7 +291,7 @@ export default function AssessmentFlow() {
   }, [state.questions, domains, alreadyCelebratedDomains]);
 
   const handleAnswerSelect = async (value: number) => {
-    if (state.loading || isAdvancing) return;
+    if (state.loading || isAdvancing || saveStatus === 'saving') return;
     
     const currentQuestion = state.questions[state.currentIndex];
     if (!currentQuestion) return;
@@ -293,8 +306,8 @@ export default function AssessmentFlow() {
       responses: updatedResponses
     }));
 
-    setIsAdvancing(true);
-    setShowSaved(true);
+    setSaveStatus('saving');
+    setSaveError(null);
 
     try {
       if (state.assessment) {
@@ -310,12 +323,21 @@ export default function AssessmentFlow() {
             response_value: value
           })
         }, session?.access_token);
+        
+        // Only show saved and advance if save was successful
+        setSaveStatus('saved');
       }
     } catch (error) {
       console.error('Failed to save response:', error);
+      setSaveStatus('error');
+      setSaveError(error instanceof Error ? error.message : 'Failed to save response');
+      return; // Don't advance if save failed
     }
 
     checkDomainCompletion(currentQuestion.id, updatedResponses);
+    
+    // Only advance if save was successful
+    setIsAdvancing(true);
 
     if (state.currentIndex < state.questions.length - 1) {
       setTimeout(async () => {
@@ -347,13 +369,13 @@ export default function AssessmentFlow() {
           console.error('Failed to update progress:', error);
         }
         
-        setShowSaved(false);
+        setSaveStatus('idle');
         setIsAdvancing(false);
       }, 800);
     } else {
       // Final question - complete assessment then show trophy celebration
       setTimeout(async () => {
-        setShowSaved(false);
+        setSaveStatus('idle');
         setIsAdvancing(false);
         
         // Complete the assessment before showing celebration
@@ -490,14 +512,16 @@ export default function AssessmentFlow() {
           allQuestions={state.questions}
           responses={state.responses}
           celebratingDomains={celebratingDomains}
-          showSaved={showSaved}
+          saveStatus={saveStatus}
+          saveError={saveError}
+          onRetry={retryLastSave}
           isComplete={isOnFinalQuestion && finalQuestionAnswered}
         />
 
-        {isOnFinalQuestion && finalQuestionAnswered && !isAdvancing && (
+        {isOnFinalQuestion && finalQuestionAnswered && !isAdvancing && saveStatus !== 'saving' && (
           <AssessmentNavigation
             onComplete={handleComplete}
-            justSaved={showSaved}
+            justSaved={saveStatus === 'saved'}
             domainColor={currentQuestion?.domains?.color_hex || '#6B7280'}
           />
         )}

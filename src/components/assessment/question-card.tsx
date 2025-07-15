@@ -15,7 +15,9 @@ interface QuestionCardProps {
   allQuestions: Question[];
   responses: Record<string, number>;
   celebratingDomains?: Set<number>;
-  showSaved?: boolean;
+  saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  saveError?: string | null;
+  onRetry?: () => void;
   isComplete?: boolean;
 }
 
@@ -38,7 +40,9 @@ export default function QuestionCard({
   allQuestions,
   responses,
   celebratingDomains = new Set(),
-  showSaved = false,
+  saveStatus = 'idle',
+  saveError = null,
+  onRetry,
   isComplete = false
 }: QuestionCardProps) {
   const domainColor = question.domains?.color_hex || '#6B7280';
@@ -286,7 +290,7 @@ export default function QuestionCard({
             <motion.button
               key={option.value}
               onClick={() => {
-                if (!isComplete) {
+                if (!isComplete && saveStatus !== 'saving') {
                   setClickedButton(option.value);
                   setTimeout(() => setClickedButton(null), 600);
                   onAnswerSelect(option.value);
@@ -296,24 +300,24 @@ export default function QuestionCard({
                 currentAnswer === option.value
                   ? 'text-white border-transparent' 
                   : 'text-gray-700 border-gray-300 hover:border-gray-400 bg-white'
-              } ${isComplete ? 'opacity-60' : ''}`}
+              } ${isComplete || saveStatus === 'saving' ? 'opacity-60' : ''}`}
               style={{
                 backgroundColor: currentAnswer === option.value ? domainColor : 'transparent',
                 borderColor: currentAnswer === option.value ? domainColor : undefined,
-                cursor: isComplete ? 'not-allowed' : 'pointer'
+                cursor: isComplete || saveStatus === 'saving' ? 'not-allowed' : 'pointer'
               }}
               onMouseEnter={(e) => {
-                if (!isComplete && currentAnswer !== option.value) {
+                if (!isComplete && saveStatus !== 'saving' && currentAnswer !== option.value) {
                   e.currentTarget.style.backgroundColor = `${domainColor}15`;
                 }
               }}
               onMouseLeave={(e) => {
-                if (!isComplete && currentAnswer !== option.value) {
+                if (!isComplete && saveStatus !== 'saving' && currentAnswer !== option.value) {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}
-              whileHover={{ scale: isComplete ? 1 : 1.02 }}
-              whileTap={{ scale: isComplete ? 1 : 0.98 }}
+              whileHover={{ scale: isComplete || saveStatus === 'saving' ? 1 : 1.02 }}
+              whileTap={{ scale: isComplete || saveStatus === 'saving' ? 1 : 0.98 }}
             >
               <div className="text-center relative z-10">
                 <div className="text-2xl font-bold mb-2">{option.value}</div>
@@ -338,17 +342,56 @@ export default function QuestionCard({
         </div>
       </div>
 
-      {/* Saved indicator */}
-      {showSaved && (
-        <motion.div
-          className="absolute top-0 right-0 p-2 rounded-lg bg-green-100 text-green-600 text-sm"
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
-        >
-          ✓ Saved
-        </motion.div>
-      )}
+      {/* Save Status Indicator */}
+      <AnimatePresence>
+        {saveStatus === 'saving' && (
+          <motion.div
+            className="absolute top-0 right-0 p-2 rounded-lg bg-blue-100 text-blue-600 text-sm flex items-center gap-2"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            Saving...
+          </motion.div>
+        )}
+        {saveStatus === 'saved' && (
+          <motion.div
+            className="absolute top-0 right-0 p-2 rounded-lg bg-green-100 text-green-600 text-sm"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            ✓ Saved
+          </motion.div>
+        )}
+        {saveStatus === 'error' && (
+          <motion.div
+            className="absolute top-0 right-0 p-2 rounded-lg bg-red-100 text-red-600 text-sm"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <div className="flex items-center gap-2">
+              <span>⚠ Save failed</span>
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className="text-xs underline hover:no-underline"
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+            {saveError && (
+              <div className="text-xs mt-1 text-red-500">{saveError}</div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

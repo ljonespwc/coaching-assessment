@@ -420,7 +420,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                             <button
-                              onClick={() => window.location.href = '/results'}
+                              onClick={() => handleViewResults(assessment.id)}
                               className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
                             >
                               View Results →
@@ -468,12 +468,22 @@ export default function DashboardPage() {
                     <div key={domain.id} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span>{domain.domain_emoji}</span>
-                        <span className="text-sm font-medium text-gray-900 truncate">
-                          {domain.domain_name}
-                        </span>
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-900 truncate block">
+                            {domain.domain_name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {data.completedAssessments} assessment{data.completedAssessments !== 1 ? 's' : ''}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-sm font-medium" style={{ color: domain.domain_color }}>
-                        {domain.latest_score}
+                      <div className="text-right">
+                        <div className="text-sm font-medium" style={{ color: domain.domain_color }}>
+                          {domain.best_score}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Best Score
+                        </div>
                       </div>
                     </div>
                   ))}
